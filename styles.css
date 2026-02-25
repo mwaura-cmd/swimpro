@@ -20,7 +20,6 @@ body {
     color: var(--text-color);
     font-weight: 400;
     letter-spacing: 0.3px;
-    margin-right: 130px;
     overflow-x: hidden;
 }
 
