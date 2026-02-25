@@ -531,7 +531,7 @@
                                 <i class="fas fa-mobile-alt"></i> Pay (M-Pesa)
                             </button>
                         </div>
-                        <button class="confirm-booking-btn" onclick="alert('Booking confirmed! Check your email for details.')">
+                        <button class="confirm-booking-btn" onclick="confirmBooking()">
                             <i class="fas fa-check"></i> Confirm Booking
                         </button>
                     </div>
@@ -568,18 +568,18 @@
 
                 <div class="booking-form">
                     <h3>Quick Booking</h3>
-                    <form>
-                        <input type="text" placeholder="Full Name" required>
-                        <input type="email" placeholder="Email Address" required>
-                        <input type="tel" placeholder="Phone Number" required>
+                    <form id="quickBookingForm">
+                        <input name="name" type="text" placeholder="Full Name" required>
+                        <input name="email" type="email" placeholder="Email Address" required>
+                        <input name="phone" type="tel" placeholder="Phone Number" required>
                         
-                        <select required>
+                        <select name="category" required>
                             <option value="">Select Category</option>
                             <option value="adult">Adult</option>
                             <option value="student">Student</option>
                         </select>
 
-                        <select required>
+                        <select name="stroke" required>
                             <option value="">Select Stroke</option>
                             <option value="freestyle">Freestyle</option>
                             <option value="backstroke">Backstroke</option>
@@ -587,9 +587,9 @@
                             <option value="butterfly">Butterfly</option>
                         </select>
 
-                        <input type="date" placeholder="Preferred Date" required>
+                        <input name="date" type="date" placeholder="Preferred Date" required>
                         
-                        <textarea placeholder="Additional Message" rows="4"></textarea>
+                        <textarea name="message" placeholder="Additional Message" rows="4"></textarea>
                         
                         <div class="payment-prompt">
                             <div class="payment-icon"><i class="fas fa-lock"></i></div>
@@ -597,6 +597,15 @@
                             <button type="button" class="pay-btn" onclick="showMpesaModal()">
                                 <i class="fas fa-mobile-alt"></i> Pay (M-Pesa)
                             </button>
+                        </div>
+
+                        <div class="manual-payment">
+                            <h4>Manual Payment (M-Pesa)</h4>
+                            <p>Send payment to <strong>0741959888</strong>. Use your full name as the payment reference.</p>
+                            <label for="paymentScreenshot">Upload payment screenshot (required if not using STK):</label>
+                            <input name="screenshot" type="file" id="paymentScreenshot" accept="image/*">
+                            <div id="screenshotPreview" style="margin-top:8px;"></div>
+                            <button type="button" id="removeScreenshot" style="display:none;margin-top:8px;">Remove Screenshot</button>
                         </div>
 
                         <button type="submit" class="submit-btn">Book Now</button>
@@ -613,6 +622,14 @@
             <p>Making swimmers since day one. Excellence in every stroke.</p>
         </div>
     </footer>
+
+    <!-- Admin Section (visible when ?admin=1 is present) -->
+    <section id="adminPanel" class="admin-section" style="display:none; padding:20px; background:#fff;">
+        <div class="container">
+            <h2>Admin — Bookings</h2>
+            <div id="adminBookings"></div>
+        </div>
+    </section>
 
     <!-- M-Pesa Payment Modal -->
     <div id="mpesaModal" class="mpesa-modal" style="display:none;">
@@ -777,13 +794,162 @@
             alert('Marked as paid. Please proceed to confirm or submit your booking.');
         }
 
+        function confirmBooking() {
+            if (localStorage.getItem('mpesaPaid') === 'true') {
+                alert('Booking confirmed! Check your email for details.');
+                // Optionally clear mpesaPaid so future bookings require payment again
+                // localStorage.removeItem('mpesaPaid');
+            } else {
+                showMpesaModal();
+                alert('Please complete M-Pesa payment before confirming your booking.');
+            }
+        }
+
+        // Intercept quick booking form submit to require M-Pesa payment
+        const qbForm = document.getElementById('quickBookingForm');
+        if (qbForm) {
+            // handle file upload preview & submission
+            const fileInput = document.getElementById('paymentScreenshot');
+            const preview = document.getElementById('screenshotPreview');
+            const removeBtn = document.getElementById('removeScreenshot');
+            let screenshotData = null;
+
+            fileInput && fileInput.addEventListener('change', function(e) {
+                const f = e.target.files[0];
+                if (!f) return;
+                if (!f.type.startsWith('image/')) { alert('Please upload an image file.'); fileInput.value = ''; return; }
+                if (f.size > 4 * 1024 * 1024) { alert('Please upload an image smaller than 4MB.'); fileInput.value = ''; return; }
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    screenshotData = ev.target.result;
+                    preview.innerHTML = `<img src="${screenshotData}" alt="screenshot" />`;
+                    removeBtn.style.display = 'inline-block';
+                };
+                reader.readAsDataURL(f);
+            });
+
+            removeBtn && removeBtn.addEventListener('click', function() {
+                screenshotData = null;
+                fileInput.value = '';
+                preview.innerHTML = '';
+                removeBtn.style.display = 'none';
+            });
+
+            qbForm.addEventListener('submit', function(e) {
+                // Allow submission if STK payment marked OR screenshot uploaded
+                const paidFlag = localStorage.getItem('mpesaPaid') === 'true';
+                if (!paidFlag && !screenshotData) {
+                    e.preventDefault();
+                    alert('Please complete payment (M-Pesa) and upload the payment screenshot, or use the Pay (M-Pesa) button.');
+                    showMpesaModal();
+                    return false;
+                }
+
+                e.preventDefault();
+                // Collect form data and save booking locally (no backend configured)
+                const form = e.target;
+                const formValues = {};
+                Array.from(form.elements).forEach(el => {
+                    if (!el.name && !el.id) return;
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
+                        if (el.type === 'file') return; // handled separately
+                        const key = el.name || el.id || el.placeholder || 'field';
+                        formValues[key] = el.value;
+                    }
+                });
+                // attempt to send to backend
+                const fd = new FormData(form);
+                fd.append('paid', paidFlag ? 'true' : 'false');
+
+                fetch('/api/bookings', { method: 'POST', body: fd })
+                    .then(r => {
+                        if (!r.ok) throw new Error('Network response not ok');
+                        return r.json();
+                    })
+                    .then(data => {
+                        form.reset();
+                        screenshotData = null; preview.innerHTML = ''; removeBtn.style.display = 'none';
+                        alert('Booking submitted to server. Admin will verify and confirm shortly.');
+                    })
+                    .catch(err => {
+                        // fallback to localStorage
+                        const bookings = JSON.parse(localStorage.getItem('swimpro_bookings') || '[]');
+                        const booking = {
+                            id: 'bk_' + Date.now(),
+                            createdAt: Date.now(),
+                            form: formValues,
+                            screenshot: screenshotData,
+                            paid: paidFlag,
+                            status: 'pending'
+                        };
+                        bookings.push(booking);
+                        localStorage.setItem('swimpro_bookings', JSON.stringify(bookings));
+                        form.reset();
+                        screenshotData = null; preview.innerHTML = ''; removeBtn.style.display = 'none';
+                        alert('Server not reachable — booking saved locally. Admin will verify when available.');
+                    });
+                return false;
+            });
+        }
         // on load, check paid state and enable buttons if previously marked
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('mpesaPaid') === 'true') {
                 document.querySelectorAll('.confirm-booking-btn').forEach(btn => { btn.disabled = false; btn.classList.add('enabled'); });
                 document.querySelectorAll('.submit-btn').forEach(btn => { btn.disabled = false; });
             }
+
+            // Admin panel activation: show if URL contains ?admin
+            if (window.location.search.includes('admin')) {
+                const panel = document.getElementById('adminPanel');
+                if (panel) panel.style.display = 'block';
+                loadAdminBookings();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         });
+
+        // Admin functions
+        async function loadAdminBookings() {
+            const container = document.getElementById('adminBookings');
+            if (!container) return;
+            container.innerHTML = '<p>Loading...</p>';
+            try {
+                const res = await fetch('/api/bookings');
+                const data = await res.json();
+                if (!Array.isArray(data) || data.length === 0) {
+                    container.innerHTML = '<p>No bookings yet.</p>';
+                    return;
+                }
+                container.innerHTML = '';
+                data.reverse().forEach(b => {
+                    const div = document.createElement('div');
+                    div.className = 'admin-booking';
+                    div.innerHTML = `
+                        <div>
+                            ${b.screenshot ? `<img src="${b.screenshot}" alt="screenshot">` : '<div style="width:120px;height:80px;background:#f2f6ff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#99a;">No image</div>'}
+                        </div>
+                        <div class="info">
+                            <div><strong>${b.name || (b.form && b.form.name) || '—'}</strong> <span class="meta">${b.phone || (b.form && b.form.phone) || ''}</span></div>
+                            <div class="meta">Date: ${b.date || (b.form && b.form.date) || ''} &nbsp; Status: <strong>${b.status}</strong></div>
+                            <div style="margin-top:6px">Message: ${b.message || (b.form && b.form.message) || ''}</div>
+                            <div class="admin-actions" style="margin-top:8px">
+                                <button class="admin-confirm" onclick="confirmBooking('${b.id}')">Confirm</button>
+                                <button class="admin-refresh" onclick="loadAdminBookings()">Refresh</button>
+                            </div>
+                        </div>`;
+                    container.appendChild(div);
+                });
+            } catch (e) {
+                container.innerHTML = '<p>Error loading bookings</p>';
+            }
+        }
+
+        function confirmBooking(id) {
+            if (!confirm('Mark booking ' + id + ' as confirmed?')) return;
+            fetch('/api/bookings/' + id + '/confirm', { method: 'PUT' })
+                .then(r => r.json())
+                .then(() => loadAdminBookings())
+                .catch(() => alert('Failed to confirm booking'));
+        }
 
         function updateSelectedDateDisplay() {
             if (selectedDate) {
