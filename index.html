@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwimPro - Swimming Classes</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Vertical Icon Navigation Sidebar -->
+    <div class="vertical-nav-sidebar">
+        <div class="vertical-nav-content">
+            <a href="#strokes" class="vertical-nav-item" title="Swimming Strokes">
+                <div class="nav-icon">
+                    <i class="fas fa-water"></i>
+                </div>
+                <span class="nav-label">Strokes</span>
+            </a>
+            <a href="#classes" class="vertical-nav-item" title="Class Pricing">
+                <div class="nav-icon">
+                    <i class="fas fa-list-ul"></i>
+                </div>
+                <span class="nav-label">Classes</span>
+            </a>
+            <a href="#services" class="vertical-nav-item" title="Services & Benefits">
+                <div class="nav-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <span class="nav-label">Services</span>
+            </a>
+            <a href="#testimonials" class="vertical-nav-item" title="Testimonials">
+                <div class="nav-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <span class="nav-label">Reviews</span>
+            </a>
+            <a href="#booking-calendar" class="vertical-nav-item" title="Book Now">
+                <div class="nav-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <span class="nav-label">Book</span>
+            </a>
+            <a href="#contact" class="vertical-nav-item" title="Contact Us">
+                <div class="nav-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <span class="nav-label">Contact</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">SwimPro</div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Master the Art of Swimming</h1>
+            <p>Professional swimming classes for all ages and skill levels</p>
+            <button class="cta-button">Book a Class Today</button>
+        </div>
+    </section>
+
+    <!-- Swimming Strokes Section -->
+    <section id="strokes" class="strokes-section">
+        <div class="container">
+            <h2>Our Swimming Strokes</h2>
+            <div class="strokes-grid">
+                <div class="stroke-card">
+                    <h3>Freestyle</h3>
+                    <div class="video-container">
+                        <iframe width="100%" height="250" src="https://www.youtube.com/embed/5HLW2AI1Ink" title="Freestyle Swimming" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <p>The fastest and most popular stroke. Master the techniques for speed and endurance in open water.</p>
+                </div>
+                <div class="stroke-card">
+                    <h3>Backstroke</h3>
+                    <div class="video-container">
+                        <iframe width="100%" height="250" src="https://www.youtube.com/embed/MrFt6JHii8w" title="Backstroke Swimming" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <p>Swim on your back with confidence. Perfect for building shoulder strength and overall body coordination.</p>
+                </div>
+                <div class="stroke-card">
+                    <h3>Breaststroke</h3>
+                    <div class="video-container">
+                        <iframe width="100%" height="250" src="https://www.youtube.com/embed/mFFxTuaMpDQ" title="Breaststroke Swimming" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <p>The gentlest stroke. Ideal for beginners and those seeking a relaxed, efficient swimming motion.</p>
+                </div>
+                <div class="stroke-card">
+                    <h3>Butterfly</h3>
+                    <div class="video-container">
+                        <iframe width="100%" height="250" src="https://www.youtube.com/embed/UffZn_-lU54" title="Butterfly Swimming" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <p>The most challenging stroke. Develop strength, coordination, and power with expert guidance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Classes & Pricing Section -->
+    <section id="classes" class="classes-section">
+        <div class="container">
+            <h2>Class Pricing</h2>
+            <div class="pricing-grid">
+                <!-- Adult Classes -->
+                <div class="pricing-card adult">
+                    <h3>Adult Classes</h3>
+                    <div class="price-item">
+                        <span class="class-name">Single Class</span>
+                        <span class="price">$25</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="class-name">4 Classes/Month</span>
+                        <span class="price">$85</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="class-name">8 Classes/Month</span>
+                        <span class="price">$160</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="class-name">Unlimited/Month</span>
+                        <span class="price">$250</span>
+                    </div>
+                    <ul class="features">
+                        <li>1-hour sessions</li>
+                        <li>Small group sizes (6-8 people)</li>
+                        <li>Professional instructors</li>
+                        <li>Flexible scheduling</li>
+                    </ul>
+                </div>
+
+                <!-- Student Classes -->
+                <div class="pricing-card student">
+                    <h3>Student Classes</h3>
+                    <div class="price-item">
+                        <span class="class-name">Single Class</span>
+                        <span class="price">$15</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="class-name">4 Classes/Month</span>
+                        <span class="price">$50</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="class-name">8 Classes/Month</span>
+                        <span class="price">$95</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="class-name">Unlimited/Month</span>
+                        <span class="price">$150</span>
+                    </div>
+                    <ul class="features">
+                        <li>45-minute sessions</li>
+                        <li>Age-appropriate groups</li>
+                        <li>Certified instructors</li>
+                        <li>Student ID required</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services & Premium Section -->
+    <section id="services" class="services-section">
+        <div class="container">
+            <h2>Our Services & Premium Plan</h2>
+            
+            <!-- Daily vs Premium Comparison -->
+            <div class="service-comparison">
+                <div class="comparison-card">
+                    <h3>Daily Pass</h3>
+                    <div class="big-price">$15 - $25</div>
+                    <p>Pay per visit (varies by age group)</p>
+                    <ul class="comparison-features">
+                        <li>✓ Full pool access</li>
+                        <li>✓ 1-hour session</li>
+                        <li>✗ No priority booking</li>
+                        <li>✗ No exclusive events</li>
+                    </ul>
+                </div>
+
+                <div class="comparison-card premium">
+                    <h3>Premium Monthly</h3>
+                    <div class="big-price">$150 - $250</div>
+                    <p>Unlimited access + exclusive benefits</p>
+                    <ul class="comparison-features">
+                        <li>✓ Unlimited pool access</li>
+                        <li>✓ Priority booking</li>
+                        <li>✓ Private sessions available</li>
+                        <li>✓ Exclusive member events</li>
+                    </ul>
+                    <div class="popular">POPULAR</div>
+                </div>
+            </div>
+
+            <!-- Premium Benefits -->
+            <h3 class="benefits-title">Premium Plan Benefits</h3>
+            <div class="benefits-grid">
+                <div class="benefit">
+                    <div class="benefit-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h4>Priority Booking</h4>
+                    <p>Reserve your preferred class times 2 weeks in advance</p>
+                </div>
+                <div class="benefit">
+                    <div class="benefit-icon">
+                        <i class="fas fa-swimmer"></i>
+                    </div>
+                    <h4>Unlimited Classes</h4>
+                    <p>Attend as many classes as you want each month</p>
+                </div>
+                <div class="benefit">
+                    <div class="benefit-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h4>Private Sessions</h4>
+                    <p>One free private session (30 min) per month</p>
+                </div>
+                <div class="benefit">
+                    <div class="benefit-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h4>Exclusive Events</h4>
+                    <p>Access to member-only workshops and competitions</p>
+                </div>
+                <div class="benefit">
+                    <div class="benefit-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4>Fitness Assessment</h4>
+                    <p>Free quarterly fitness evaluation and progress tracking</p>
+                </div>
+                <div class="benefit">
+                    <div class="benefit-icon">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <h4>Member Perks</h4>
+                    <p>Discounts at partner shops and health facilities</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="testimonials-section">
+        <h2>What Our Community Says</h2>
+        <p class="testimonials-subtitle">Trusted by tourists, students, and educators from Mountain Breeze Hotel and University of Embu</p>
+        
+        <div class="testimonials-container">
+            <div class="testimonials-box">
+                <div class="testimonials-grid" id="testimonialsGrid">
+                <!-- Tourists -->
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar tourist-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="testimonial-info">
+                            <h4>Sarah Johnson</h4>
+                            <p class="role">
+                                <i class="fas fa-hotel"></i> Mountain Breeze Hotel Guest
+                            </p>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">
+                        "Amazing experience! I visited SwimPro during my stay at Mountain Breeze Hotel and had the best swimming lessons. The instructors are professional and friendly. Highly recommend to all hotel guests!"
+                    </p>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar tourist-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="testimonial-info">
+                            <h4>James Mitchell</h4>
+                            <p class="role">
+                                <i class="fas fa-hotel"></i> Mountain Breeze Hotel Guest
+                            </p>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">
+                        "Perfect addition to my vacation! The booking system was so easy, and the instructors helped me improve my freestyle stroke in just a few sessions. Mountain Breeze Hotel guests always mention this place!"
+                    </p>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar tourist-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="testimonial-info">
+                            <h4>Emma Thompson</h4>
+                            <p class="role">
+                                <i class="fas fa-hotel"></i> Mountain Breeze Hotel Guest
+                            </p>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">
+                        "Wonderful! The instructors are certified and patient. I felt so safe and learned a lot. This is a must-do for any guest at Mountain Breeze Hotel. Will definitely be back!"
+                    </p>
+                </div>
+
+                <!-- University of Embu Students -->
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar student-avatar">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="testimonial-info">
+                            <h4>Michael Kariuki</h4>
+                            <p class="role">
+                                <i class="fas fa-university"></i> University of Embu Student
+                            </p>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">
+                        "SwimPro changed my life! I came not knowing how to swim, and now I'm confident in the water. The classes are affordable and the instructors really care about their students' progress."
+                    </p>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar student-avatar">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="testimonial-info">
+                            <h4>Amelia Omondi</h4>
+                            <p class="role">
+                                <i class="fas fa-university"></i> University of Embu Student
+                            </p>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">
+                        "Best decision ever! The calendar booking system makes it easy to fit classes around my schedule. I've improved so much and made friends too. Highly recommended for all Embu university students!"
+                    </p>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar student-avatar">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="testimonial-info">
+                            <h4>David Kipchoge</h4>
+                            <p class="role">
+                                <i class="fas fa-university"></i> University of Embu Student
+                            </p>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">
+                        "The instructors are incredibly knowledgeable and supportive. I went from swimming basics to mastering butterfly stroke in just 3 months. A+ experience!"
+                    </p>
+                </div>
+
+                <!-- Lecturers -->
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar lecturer-avatar">
+                            <i class="fas fa-chalkboard-user"></i>
+                        </div>
+                        <div class="testimonial-info">
+                            <h4>Dr. Elizabeth Wanjiru</h4>
+                            <p class="role">
+                                <i class="fas fa-book"></i> University of Embu Lecturer
+                            </p>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">
+                        "I highly recommend SwimPro to all my students. The health and wellness benefits are outstanding. The instructors maintain professional standards and create a safe learning environment."
+                    </p>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar lecturer-avatar">
+                            <i class="fas fa-chalkboard-user"></i>
+                        </div>
+                        <div class="testimonial-info">
+                            <h4>Prof. Bernard Mutua</h4>
+                            <p class="role">
+                                <i class="fas fa-book"></i> University of Embu Lecturer
+                            </p>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">
+                        "Excellent facility and outstanding instructors. I've enrolled both my students and family members. The professional approach and quality of instruction is unmatched. SwimPro is a gem!"
+                    </p>
+                </div>
+
+                <div class="testimonial-card">
+                    <div class="testimonial-header">
+                        <div class="avatar lecturer-avatar">
+                            <i class="fas fa-chalkboard-user"></i>
+                        </div>
+                        <div class="testimonial-info">
+                            <h4>Dr. Miriam Nyambura</h4>
+                            <p class="role">
+                                <i class="fas fa-book"></i> University of Embu Lecturer
+                            </p>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                    </div>
+                    <p class="testimonial-text">
+                        "SwimPro offers world-class training with certified instructors. I'm impressed with their commitment to safety and excellence. My colleagues and I have nothing but praise for this institution."
+                    </p>
+                </div>
+                </div>
+            </div>
+            <div class="testimonials-controls" id="testimonialsControls"></div>
+        </div>
+    </section>
+    <section id="booking-calendar" class="booking-calendar-section">
+        <div class="container">
+            <h2>Smart Booking Calendar</h2>
+            <p class="calendar-subtitle">See instructor availability in real-time and book your preferred time slot</p>
+            
+            <div class="booking-calendar-wrapper">
+                <!-- Calendar Navigation -->
+                <div class="calendar-nav">
+                    <button id="prevMonth" class="nav-btn"><i class="fas fa-chevron-left"></i></button>
+                    <h3 id="currentMonth">February 2026</h3>
+                    <button id="nextMonth" class="nav-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+
+                <!-- Calendar Grid -->
+                <div class="calendar-grid">
+                    <div class="calendar-weekdays">
+                        <div>Sun</div>
+                        <div>Mon</div>
+                        <div>Tue</div>
+                        <div>Wed</div>
+                        <div>Thu</div>
+                        <div>Fri</div>
+                        <div>Sat</div>
+                    </div>
+                    <div class="calendar-dates" id="calendarDates"></div>
+                </div>
+
+                <!-- Availability Info -->
+                <div class="availability-info">
+                    <div class="info-badge available">
+                        <i class="fas fa-check-circle"></i> Available
+                    </div>
+                    <div class="info-badge partially-booked">
+                        <i class="fas fa-circle-half-stroke"></i> Limited Spots
+                    </div>
+                    <div class="info-badge fully-booked">
+                        <i class="fas fa-times-circle"></i> Fully Booked
+                    </div>
+                </div>
+
+                <!-- Time Slots for Selected Date -->
+                <div class="time-slots-section">
+                    <h3>Available Time Slots for <span id="selectedDate">Today</span></h3>
+                    
+                    <div class="instructors-view">
+                        <!-- Instructor 1 -->
+                        <div class="instructor-card">
+                            <div class="instructor-header">
+                                <h4><i class="fas fa-user-circle"></i> Instructor: Denis Mwaura</h4>
+                                <span class="rating">⭐ 4.9/5 (128 reviews)</span>
+                            </div>
+                            <div class="instructor-slots">
+                                <button class="time-slot available-slot">
+                                    <span class="time">9:00 AM</span>
+                                    <span class="capacity">2/6 spots</span>
+                                </button>
+                                <button class="time-slot available-slot">
+                                    <span class="time">10:30 AM</span>
+                                    <span class="capacity">4/6 spots</span>
+                                </button>
+                                <button class="time-slot available-slot">
+                                    <span class="time">1:00 PM</span>
+                                    <span class="capacity">1/6 spots</span>
+                                </button>
+                                <button class="time-slot fully-booked-slot" disabled>
+                                    <span class="time">3:00 PM</span>
+                                    <span class="capacity">6/6 Full</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Instructor 2 -->
+                        <div class="instructor-card">
+                            <div class="instructor-header">
+                                <h4><i class="fas fa-user-circle"></i> Instructor: Kennedy Munyua</h4>
+                                <span class="rating">⭐ 5.0/5 (95 reviews)</span>
+                            </div>
+                            <div class="instructor-slots">
+                                <button class="time-slot fully-booked-slot" disabled>
+                                    <span class="time">9:00 AM</span>
+                                    <span class="capacity">6/6 Full</span>
+                                </button>
+                                <button class="time-slot available-slot">
+                                    <span class="time">10:30 AM</span>
+                                    <span class="capacity">3/6 spots</span>
+                                </button>
+                                <button class="time-slot available-slot">
+                                    <span class="time">1:00 PM</span>
+                                    <span class="capacity">5/6 spots</span>
+                                </button>
+                                <button class="time-slot available-slot">
+                                    <span class="time">3:00 PM</span>
+                                    <span class="capacity">2/6 spots</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="selected-slot-info" style="display: none;">
+                        <p><strong>Selected Booking:</strong> <span id="selectedSlotInfo"></span></p>
+                        <button class="confirm-booking-btn" onclick="alert('Booking confirmed! Check your email for details.')">
+                            <i class="fas fa-check"></i> Confirm Booking
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact & Booking Section -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2>Get In Touch & Book Your Class</h2>
+            <div class="contact-wrapper">
+                <div class="contact-info">
+                    <h3>Contact Information</h3>
+                    <div class="info-item">
+                        <strong>Phone:</strong>
+                        <p><a href="tel:+1234567890">(123) 456-7890</a></p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Email:</strong>
+                        <p><a href="mailto:info@swimpro.com">info@swimpro.com</a></p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Address:</strong>
+                        <p>123 Pool Avenue<br>Swimming City, SC 12345</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Hours:</strong>
+                        <p>Mon - Fri: 9:00 AM - 8:00 PM<br>
+                           Sat - Sun: 10:00 AM - 6:00 PM</p>
+                    </div>
+                </div>
+
+                <div class="booking-form">
+                    <h3>Quick Booking</h3>
+                    <form>
+                        <input type="text" placeholder="Full Name" required>
+                        <input type="email" placeholder="Email Address" required>
+                        <input type="tel" placeholder="Phone Number" required>
+                        
+                        <select required>
+                            <option value="">Select Category</option>
+                            <option value="adult">Adult</option>
+                            <option value="student">Student</option>
+                        </select>
+
+                        <select required>
+                            <option value="">Select Stroke</option>
+                            <option value="freestyle">Freestyle</option>
+                            <option value="backstroke">Backstroke</option>
+                            <option value="breaststroke">Breaststroke</option>
+                            <option value="butterfly">Butterfly</option>
+                            <option value="medley">Individual Medley</option>
+                            <option value="safety">Water Safety</option>
+                        </select>
+
+                        <input type="date" placeholder="Preferred Date" required>
+                        
+                        <textarea placeholder="Additional Message" rows="4"></textarea>
+                        
+                        <button type="submit" class="submit-btn">Book Now</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 SwimPro Swimming Classes. All rights reserved.</p>
+            <p>Making swimmers since day one. Excellence in every stroke.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation items
+        document.querySelectorAll('.vertical-nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = item.getAttribute('href');
+                const targetSection = document.querySelector(targetId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+        // Calendar functionality
+        let currentDate = new Date(2026, 1, 25); // Feb 25, 2026
+        let selectedDate = null;
+
+        // Duplicate testimonials for continuous scroll
+        const testimonialsGrid = document.getElementById('testimonialsGrid');
+        if (testimonialsGrid) {
+            const originalCards = testimonialsGrid.innerHTML;
+            testimonialsGrid.innerHTML = originalCards + originalCards;
+        }
+
+        // Mock availability data (which days have spots, how many)
+        const availabilityData = {
+            '2026-02-25': 'available',
+            '2026-02-26': 'available',
+            '2026-02-27': 'partially-booked',
+            '2026-03-01': 'available',
+            '2026-03-02': 'fully-booked',
+            '2026-03-03': 'available',
+            '2026-03-04': 'partially-booked',
+        };
+
+        function generateCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // Update month display
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+
+            // Clear calendar
+            const calendarDates = document.getElementById('calendarDates');
+            calendarDates.innerHTML = '';
+
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            // Add previous month dates
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'calendar-date other-month';
+                dateDiv.textContent = daysInPrevMonth - i;
+                calendarDates.appendChild(dateDiv);
+            }
+
+            // Add current month dates
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateDiv = document.createElement('div');
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const status = availabilityData[dateStr] || 'available';
+                
+                dateDiv.className = `calendar-date ${status}`;
+                
+                // Mark today as selected initially
+                if (day === 25 && month === 1 && year === 2026) {
+                    dateDiv.classList.add('selected');
+                    selectedDate = new Date(year, month, day);
+                    updateSelectedDateDisplay();
+                }
+                
+                dateDiv.textContent = day;
+                
+                dateDiv.addEventListener('click', () => {
+                    document.querySelectorAll('.calendar-date').forEach(d => d.classList.remove('selected'));
+                    dateDiv.classList.add('selected');
+                    selectedDate = new Date(year, month, day);
+                    updateSelectedDateDisplay();
+                });
+                
+                calendarDates.appendChild(dateDiv);
+            }
+
+            // Add next month dates
+            const totalCells = calendarDates.children.length + firstDay;
+            const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            for (let day = 1; day <= remainingCells; day++) {
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'calendar-date other-month';
+                dateDiv.textContent = day;
+                calendarDates.appendChild(dateDiv);
+            }
+        }
+
+        function updateSelectedDateDisplay() {
+            if (selectedDate) {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('selectedDate').textContent = selectedDate.toLocaleDateString('en-US', options);
+            }
+        }
+
+        // Month navigation
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            generateCalendar();
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            generateCalendar();
+        });
+
+        // Time slot selection
+        document.querySelectorAll('.time-slot.available-slot').forEach(slot => {
+            slot.addEventListener('click', function() {
+                document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+                
+                const instructor = this.closest('.instructor-card').querySelector('.instructor-header h4').textContent;
+                const time = this.querySelector('.time').textContent;
+                document.getElementById('selectedSlotInfo').textContent = `${instructor.trim()} - ${time}`;
+                
+                document.querySelector('.selected-slot-info').style.display = 'flex';
+            });
+        });
+
+        // Initialize calendar
+        generateCalendar();
+    </script>
+</body>
+</html>
