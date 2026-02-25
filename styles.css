@@ -522,6 +522,66 @@ body {
     margin-bottom: 1.5rem;
 }
 
+/* Payment prompt inside booking form / confirmation */
+.payment-prompt {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: linear-gradient(90deg, rgba(0,102,204,0.04), rgba(0,168,232,0.03));
+    border: 1px solid rgba(0,102,204,0.08);
+    padding: 10px;
+    border-radius: 10px;
+    margin: 0.8rem 0 1rem 0;
+}
+
+.payment-prompt.inline {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.payment-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.payment-text {
+    font-size: 0.95rem;
+    color: var(--dark-color);
+    font-weight: 600;
+}
+
+.pay-btn {
+    margin-left: auto;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pay-btn i { font-size: 0.95rem; }
+
+@media (max-width: 480px) {
+    .payment-prompt { padding: 12px; gap: 0.6rem; }
+    .payment-icon { width: 40px; height: 40px; font-size: 1.1rem; }
+    .payment-text { font-size: 0.9rem; }
+    .pay-btn { padding: 10px 14px; font-size: 0.95rem; margin-left: 0.5rem; }
+}
+
 .info-item {
     margin-bottom: 2rem;
     padding-bottom: 1.5rem;
@@ -1206,7 +1266,25 @@ body {
         font-weight: 700;
     }
 
+
+    /* M-Pesa modal styles */
+    .mpesa-modal { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+    .mpesa-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+    .mpesa-modal-content { position: relative; background: white; width: 92%; max-width: 420px; padding: 18px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); z-index: 10000; }
+    .mpesa-modal-content h3 { margin: 0 0 8px 0; color: var(--primary-color); }
+    .mpesa-details { display:flex; gap:0.6rem; align-items:center; margin: 12px 0; }
+    .mpesa-number { background: linear-gradient(90deg,#f3f8ff,#eef9ff); padding:10px 12px; border-radius:8px; font-weight:700; color:var(--dark-color); }
+    .copy-number { background: var(--secondary-color); color:white; border:none; padding:8px 10px; border-radius:8px; cursor:pointer; }
+    .mpesa-actions { display:flex; gap:0.6rem; justify-content:flex-end; margin-top:12px; }
+    .mpesa-paid { background: var(--success-color); color:white; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:700; }
+    .mpesa-cancel { background:#eee; border:none; padding:10px 12px; border-radius:8px; cursor:pointer; }
+    .mpesa-close { position:absolute; right:10px; top:8px; background:transparent; border:none; font-size:1.4rem; cursor:pointer; }
     .hero-content h1 {
+
+/* Desktop/tablet modal fallbacks */
+.mpesa-modal { display:none; }
+.mpesa-modal.show { display:flex; }
+.mpesa-modal-content ul { margin: 8px 0 0 18px; }
         font-size: 2rem;
     }
 
