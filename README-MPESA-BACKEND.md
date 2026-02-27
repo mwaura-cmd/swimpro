@@ -43,6 +43,14 @@ Testing tips:
 - For local testing use `ngrok` or similar to expose `http://localhost:4000` and set `CALLBACK_BASE_URL` to the ngrok URL.
 - Use the Safaricom Daraja sandbox credentials and endpoints when `DAR_USE_SANDBOX` is not set to `false`.
 
+Frontend configuration:
+- If your frontend is served from a different origin (for example GitHub Pages), set the frontend `API_BASE` variable to point to your backend. You can do this by setting `window.API_BASE` before the site's inline scripts, or by editing the `API_BASE` constant in `index.html`.
+
+Example (place in a script tag before other scripts):
+```html
+<script>window.API_BASE = 'https://your-ngrok-id.ngrok.io';</script>
+```
+
 Security & production notes:
 - Protect the callback endpoint and admin endpoints in production.
 - Validate and verify callbacks server-side (use the provided `CheckoutRequestID` to match requests).

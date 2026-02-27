@@ -56,7 +56,7 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">EMBU SHARKS</div>
+            <div class="logo">EMBU WAVE MAKERS</div>
         </div>
     </nav>
 
@@ -647,6 +647,7 @@
                 <li>Amount: Pay the appropriate class fee (as discussed/selected).</li>
             </ul>
             <div class="mpesa-actions">
+                <button class="mpesa-stk" onclick="requestStk()">Request STK Push</button>
                 <button class="mpesa-paid" onclick="markMpesaPaid()">I Have Sent</button>
                 <button class="mpesa-cancel" onclick="closeMpesaModal()">Close</button>
             </div>
@@ -654,6 +655,10 @@
     </div>
 
     <script>
+        // Backend base URL — set `window.API_BASE` before this script if needed (ngrok or deployed URL)
+        const API_BASE = window.API_BASE || 'http://localhost:4000';
+        let preferStk = false;
+
         // Smooth scroll for navigation items
         document.querySelectorAll('.vertical-nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
@@ -794,6 +799,12 @@
             alert('Marked as paid. Please proceed to confirm or submit your booking.');
         }
 
+        function requestStk() {
+            preferStk = true;
+            closeMpesaModal();
+            alert('STK push requested. Submit the booking form and we will send the payment prompt to your phone.');
+        }
+
         function confirmBooking() {
             if (localStorage.getItem('mpesaPaid') === 'true') {
                 alert('Booking confirmed! Check your email for details.');
@@ -861,15 +872,42 @@
                 const fd = new FormData(form);
                 fd.append('paid', paidFlag ? 'true' : 'false');
 
-                fetch('/api/bookings', { method: 'POST', body: fd })
+                fetch(`${API_BASE}/api/bookings`, { method: 'POST', body: fd })
                     .then(r => {
                         if (!r.ok) throw new Error('Network response not ok');
                         return r.json();
                     })
-                    .then(data => {
+                    .then(async data => {
                         form.reset();
                         screenshotData = null; preview.innerHTML = ''; removeBtn.style.display = 'none';
                         alert('Booking submitted to server. Admin will verify and confirm shortly.');
+
+                        // If the user requested an STK push, initiate it now
+                        if (preferStk && data && data.id) {
+                            try {
+                                // determine amount from category mapping
+                                const cat = form.querySelector('select[name="category"]').value;
+                                const amounts = { adult: 200, student: 150 };
+                                const amount = amounts[cat] || 200;
+                                // normalize phone to 254 format
+                                let phone = (form.querySelector('input[name="phone"]').value || '').trim();
+                                if (phone.startsWith('0')) phone = '254' + phone.slice(1);
+                                if (phone.startsWith('+')) phone = phone.replace('+', '');
+                                const stkResp = await fetch(`${API_BASE}/api/bookings/${data.id}/stk`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ phone, amount })
+                                });
+                                if (!stkResp.ok) throw new Error('STK request failed');
+                                const stkData = await stkResp.json();
+                                console.log('STK response', stkData);
+                                alert('STK push initiated. You should receive a prompt on your phone shortly.');
+                                preferStk = false;
+                            } catch (e) {
+                                console.error('STK error', e);
+                                alert('Failed to initiate STK push. Admin will still verify the booking.');
+                            }
+                        }
                     })
                     .catch(err => {
                         // fallback to localStorage
@@ -913,7 +951,7 @@
             if (!container) return;
             container.innerHTML = '<p>Loading...</p>';
             try {
-                const res = await fetch('/api/bookings');
+                const res = await fetch(`${API_BASE}/api/bookings`);
                 const data = await res.json();
                 if (!Array.isArray(data) || data.length === 0) {
                     container.innerHTML = '<p>No bookings yet.</p>';
@@ -945,7 +983,7 @@
 
         function confirmBooking(id) {
             if (!confirm('Mark booking ' + id + ' as confirmed?')) return;
-            fetch('/api/bookings/' + id + '/confirm', { method: 'PUT' })
+            fetch(`${API_BASE}/api/bookings/${id}/confirm`, { method: 'PUT' })
                 .then(r => r.json())
                 .then(() => loadAdminBookings())
                 .catch(() => alert('Failed to confirm booking'));
