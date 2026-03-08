@@ -626,13 +626,14 @@
     <script>
         // Backend base URL — set `window.API_BASE` before this script if needed (ngrok or deployed URL)
         const API_BASE = window.API_BASE || 'https://swimpro-7h93.onrender.com';
-        let paystackPublicKey = null;
+        // Fallback to the public key directly — safe to include in frontend code
+        let paystackPublicKey = 'pk_test_71097cc7c455ba34c1d63c61d9ce8d5109065b90';
 
-        // Fetch Paystack public key from backend on load
+        // Try to fetch Paystack public key from backend (overrides fallback if available)
         fetch(`${API_BASE}/api/paystack/config`)
-            .then(r => r.json())
-            .then(d => { paystackPublicKey = d.publicKey; })
-            .catch(() => console.warn('Could not fetch Paystack config'));
+            .then(r => { if (!r.ok) throw new Error('Config endpoint returned ' + r.status); return r.json(); })
+            .then(d => { if (d.publicKey && d.publicKey.trim()) paystackPublicKey = d.publicKey.trim(); })
+            .catch(err => console.warn('Could not fetch Paystack config, using fallback key:', err.message));
 
         // Smooth scroll for navigation items
         document.querySelectorAll('.vertical-nav-item').forEach(item => {
@@ -735,7 +736,7 @@
 
         // Paystack payment flow from calendar time-slot selection
         function payWithPaystack() {
-            if (!paystackPublicKey) {
+            if (!paystackPublicKey || !paystackPublicKey.trim()) {
                 alert('Payment system not configured. Please try again later.');
                 return;
             }
@@ -799,7 +800,7 @@
                 const amount = amounts[category] || 200;
                 const reference = 'swimpro_' + Date.now();
 
-                if (!paystackPublicKey) {
+                if (!paystackPublicKey || !paystackPublicKey.trim()) {
                     alert('Payment system not configured yet. Please try again shortly.');
                     return;
                 }

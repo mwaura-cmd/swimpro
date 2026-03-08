@@ -5,6 +5,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const nodemailer = require('nodemailer');
 
 const crypto = require('crypto');
 
@@ -31,6 +32,48 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
+
+// ------------ Email setup ------------
+const EMAIL_USER = process.env.EMAIL_USER || '';
+const EMAIL_PASS = process.env.EMAIL_PASS || '';
+const EMAIL_TO   = process.env.EMAIL_TO   || EMAIL_USER; // where admin notifications go
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: EMAIL_USER,
+    pass: EMAIL_PASS,
+  },
+});
+
+async function sendBookingEmail(booking) {
+  if (!EMAIL_USER || !EMAIL_PASS) {
+    console.warn('[Email] EMAIL_USER or EMAIL_PASS not set — skipping email.');
+    return;
+  }
+  const mailOptions = {
+    from: EMAIL_USER,
+    to: EMAIL_TO,
+    subject: `New Booking from ${booking.name}`,
+    text: [
+      `Name:     ${booking.name}`,
+      `Email:    ${booking.email}`,
+      `Phone:    ${booking.phone}`,
+      `Category: ${booking.category}`,
+      `Stroke:   ${booking.stroke}`,
+      `Date:     ${booking.date}`,
+      `Message:  ${booking.message || '—'}`,
+      `Booking ID: ${booking.id}`,
+    ].join('\n'),
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('[Email] ✅ Booking notification sent successfully:', info.messageId);
+  } catch (err) {
+    console.error('[Email] ❌ Failed to send booking notification:', err.message);
+  }
+}
 
 function readBookings() {
   try {
@@ -132,6 +175,7 @@ app.post('/api/bookings', upload.single('screenshot'), (req, res) => {
     name: req.body.name || '',
     email: req.body.email || '',
     phone: req.body.phone || '',
+    category: req.body.category || '',
     stroke: req.body.stroke || '',
     date: req.body.date || '',
     message: req.body.message || '',
@@ -142,6 +186,7 @@ app.post('/api/bookings', upload.single('screenshot'), (req, res) => {
   };
   bookings.push(b);
   writeBookings(bookings);
+  sendBookingEmail(b); // fire-and-forget — does not block the response
   res.json(b);
 });
 
@@ -175,4 +220,6 @@ app.put('/api/bookings/:id/payref', (req, res) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
