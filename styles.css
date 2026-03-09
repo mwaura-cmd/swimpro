@@ -761,6 +761,8 @@ body {
     flex-direction: row;
     gap: 0.5rem;
     animation: scrollTestimonials 25s linear infinite;
+    -webkit-animation: scrollTestimonials 25s linear infinite;
+    will-change: transform;
     padding: 0;
 }
 
@@ -903,17 +905,20 @@ body {
 .booking-calendar-wrapper {
     background: white;
     border-radius: 15px;
-    padding: 3rem;
+    padding: 2rem;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Calendar Navigation */
 .calendar-nav {
     display: flex;
+    flex-direction: row;
     justify-content: center;
     align-items: center;
-    gap: 2rem;
-    margin-bottom: 2rem;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .calendar-nav h3 {
@@ -946,34 +951,37 @@ body {
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 4px 24px rgba(0,102,204,0.08);
-    padding: 1.2rem;
+    padding: 0.75rem;
     border: 1px solid #e0ecff;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .calendar-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
+    gap: 3px;
+    margin-bottom: 0.5rem;
     text-align: center;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     border-radius: 10px;
-    padding: 0.4rem 0;
+    padding: 0.3rem 0;
 }
 
 .calendar-weekdays div {
     font-weight: 700;
     color: #fff;
-    padding: 0.6rem 0;
+    padding: 0.5rem 0;
     font-family: 'Poppins', sans-serif;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
+    font-size: 0.8rem;
+    letter-spacing: 0.3px;
 }
 
 .calendar-dates {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 0.5rem;
+    gap: 3px;
 }
 
 .calendar-date {
@@ -983,11 +991,11 @@ body {
     align-items: center;
     justify-content: center;
     border: 2px solid #e5e7eb;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     position: relative;
     background: white;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
@@ -1285,7 +1293,15 @@ body {
         padding: 40px 14px;
     }
 
-    .booking-calendar-wrapper { padding: 1.2rem; }
+    .booking-calendar-wrapper { padding: 0.75rem; }
+    .calendar-grid { padding: 0.5rem; }
+    .calendar-nav { flex-direction: row !important; gap: 0.5rem; margin-bottom: 1rem; }
+    .calendar-nav h3 { min-width: 0; flex: 1; text-align: center; font-size: 1rem; }
+    .nav-btn { width: 36px; height: 36px; flex-shrink: 0; }
+    .calendar-weekdays { gap: 2px; }
+    .calendar-weekdays div { font-size: 0.7rem; padding: 0.4rem 0; letter-spacing: 0; }
+    .calendar-dates { gap: 2px; }
+    .calendar-date { font-size: 0.78rem; border-radius: 6px; border-width: 1.5px; }
 
     /* Single column for easy scrolling */
     .strokes-grid, .pricing-grid, .benefits-grid, .instructors-view, .service-comparison { grid-template-columns: 1fr; }
@@ -1332,8 +1348,11 @@ body {
 
     .video-container { padding-bottom: 56.25%; }
 
-    .calendar-weekdays div { font-size: 0.85rem; padding: 0.5rem; }
-    .calendar-date { aspect-ratio: 1; padding: 6px; }
+    .calendar-weekdays div { font-size: 0.65rem; padding: 0.35rem 0; letter-spacing: 0; }
+    .calendar-date { aspect-ratio: 1; padding: 2px; font-size: 0.72rem; border-radius: 5px; }
+    .calendar-grid { padding: 0.4rem; }
+    .calendar-dates { gap: 2px; }
+    .calendar-weekdays { gap: 2px; }
 
     .testimonial-card { min-width: 180px; }
 
@@ -1400,9 +1419,9 @@ body {
     .comparison-card.premium { transform: scale(1); }
     h2 { font-size: 1.8rem; }
 
-    .booking-calendar-wrapper { padding: 1.5rem; }
-    .calendar-nav { gap: 1rem; flex-direction: column; }
-    .calendar-nav h3 { min-width: auto; }
+    .booking-calendar-wrapper { padding: 0.75rem; }
+    .calendar-nav { gap: 0.5rem; flex-direction: row !important; align-items: center; }
+    .calendar-nav h3 { min-width: 0; flex: 1; font-size: 1rem; }
     .instructors-view { grid-template-columns: 1fr; }
     .instructor-slots { grid-template-columns: 1fr; }
 
@@ -1412,7 +1431,7 @@ body {
         align-items: flex-start;
     }
 
-    .testimonials-grid { gap: 1.5rem; animation: scrollTestimonials 25s linear infinite; padding: 1rem 0; }
+    .testimonials-grid { gap: 1.5rem; animation: scrollTestimonials 25s linear infinite; -webkit-animation: scrollTestimonials 25s linear infinite; will-change: transform; padding: 1rem 0; }
     .testimonial-card { min-width: 80vw; height: auto; padding: 1.3rem; border-radius: 12px; }
     .testimonial-info h4 { font-size: 0.95rem; font-weight: 700; }
     .testimonial-info .role { font-size: 0.8rem; }
@@ -1457,7 +1476,8 @@ body {
         max-width: 100%;
         padding: 0;
         position: relative;
-        overflow: hidden;
+        overflow: hidden; /* clips the scrolling grid */
+        width: 100%;
     }
 
     .testimonials-box {
@@ -1466,21 +1486,22 @@ body {
         margin-top: 0;
         overflow: hidden;
         position: relative;
+        width: 100%;
     }
 
     .testimonials-grid {
         gap: 1rem;
         animation: scrollTestimonials 25s linear infinite;
+        -webkit-animation: scrollTestimonials 25s linear infinite;
+        will-change: transform;
         display: flex;
         flex-wrap: nowrap;
-        justify-content: flex-start;
         padding: 1rem 0;
-        overflow-x: hidden;
+        /* NO overflow here — clipping must only happen on parent container */
     }
 
     .testimonial-card {
-        min-width: 85%;
-        width: 85%;
+        min-width: 82vw;
         height: auto;
         padding: 1.2rem;
         border: 2px solid #404056;
@@ -1489,7 +1510,6 @@ body {
         display: flex;
         flex-direction: column;
         gap: 0.8rem;
-        margin-right: 0.5rem;
     }
 
     .testimonial-card::before {
