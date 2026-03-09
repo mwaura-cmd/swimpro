@@ -585,11 +585,21 @@
                         <input name="email" type="email" placeholder="Email Address" required>
                         <input name="phone" type="tel" placeholder="Phone Number" required>
                         
-                        <select name="category" required>
+                        <select name="category" id="bookingCategory" required>
                             <option value="">Select Category</option>
                             <option value="adult">Adult</option>
                             <option value="student">Student</option>
                         </select>
+
+                        <select name="paymentPlan" id="bookingPlan" required>
+                            <option value="">Select Payment Plan</option>
+                            <option value="daily">Daily – Single Class (Adult KSh 200 / Student KSh 150)</option>
+                            <option value="monthly">Monthly Unlimited (Adult KSh 5,000 / Student KSh 4,000)</option>
+                        </select>
+
+                        <p id="priceDisplay" style="margin:4px 0 8px; font-weight:600; color:#1a73e8; font-size:0.95rem; display:none;">
+                            Amount to pay: <span id="priceAmount"></span>
+                        </p>
 
                         <select name="stroke" required>
                             <option value="">Select Stroke</option>
@@ -752,8 +762,24 @@
             }
             const email = prompt('Enter your email address for receipt:');
             if (!email) return;
-            const amounts = { adult: 200, student: 150 };
-            const amount = 200; // default single class
+
+            const planInput = prompt('Select payment plan:\nType "daily" for a single class\nType "monthly" for unlimited monthly access');
+            const plan = (planInput || '').trim().toLowerCase();
+            if (plan !== 'daily' && plan !== 'monthly') {
+                alert('Invalid plan. Please type "daily" or "monthly".');
+                return;
+            }
+            const catInput = prompt('Select your category:\nType "adult"\nType "student"');
+            const cat = (catInput || '').trim().toLowerCase();
+            if (cat !== 'adult' && cat !== 'student') {
+                alert('Invalid category. Please type "adult" or "student".');
+                return;
+            }
+            const pricingMap = {
+                daily:   { adult: 200,  student: 150  },
+                monthly: { adult: 5000, student: 4000 }
+            };
+            const amount = pricingMap[plan][cat];
             const reference = 'swimpro_' + Date.now();
 
             const popup = new PaystackPop();
@@ -806,8 +832,12 @@
                 const email = form.querySelector('input[name="email"]').value.trim();
                 const name = form.querySelector('input[name="name"]').value.trim();
                 const category = form.querySelector('select[name="category"]').value;
-                const amounts = { adult: 200, student: 150 };
-                const amount = amounts[category] || 200;
+                const paymentPlan = form.querySelector('select[name="paymentPlan"]').value;
+                const pricingMap = {
+                    daily:   { adult: 200,  student: 150  },
+                    monthly: { adult: 5000, student: 4000 }
+                };
+                const amount = (pricingMap[paymentPlan] && pricingMap[paymentPlan][category]) || 200;
                 const reference = 'swimpro_' + Date.now();
 
                 if (!paystackPublicKey || !paystackPublicKey.trim()) {
@@ -867,6 +897,30 @@
                     });
             });
         }
+        // Live price display in booking form
+        (function() {
+            const catSel  = document.getElementById('bookingCategory');
+            const planSel = document.getElementById('bookingPlan');
+            const display = document.getElementById('priceDisplay');
+            const amtSpan = document.getElementById('priceAmount');
+            const pricing = {
+                daily:   { adult: 200,  student: 150  },
+                monthly: { adult: 5000, student: 4000 }
+            };
+            function updatePrice() {
+                const cat  = catSel  ? catSel.value  : '';
+                const plan = planSel ? planSel.value : '';
+                if (cat && plan && pricing[plan] && pricing[plan][cat]) {
+                    amtSpan.textContent = 'KSh ' + pricing[plan][cat].toLocaleString();
+                    display.style.display = 'block';
+                } else {
+                    display.style.display = 'none';
+                }
+            }
+            if (catSel)  catSel.addEventListener('change',  updatePrice);
+            if (planSel) planSel.addEventListener('change', updatePrice);
+        })();
+
         // on load, check paid state and enable buttons if previously marked
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('paystackPaid') === 'true') {
