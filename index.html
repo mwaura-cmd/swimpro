@@ -459,9 +459,9 @@
                                     <span class="time">11:30 AM</span>
                                     <span class="capacity">4/6 spots</span>
                                 </button>
-                                <button class="time-slot fully-booked-slot" disabled>
+                                <button class="time-slot available-slot">
                                     <span class="time">1:00 PM</span>
-                                    <span class="capacity">6/6 Full</span>
+                                    <span class="capacity">6/6 spots</span>
                                 </button>
                                 <button class="time-slot available-slot">
                                     <span class="time">2:30 PM</span>
@@ -485,9 +485,9 @@
                                 <span class="rating">⭐ 5.0/5 (95 reviews)</span>
                             </div>
                             <div class="instructor-slots">
-                                <button class="time-slot fully-booked-slot" disabled>
+                                <button class="time-slot available-slot">
                                     <span class="time">10:00 AM</span>
-                                    <span class="capacity">6/6 Full</span>
+                                    <span class="capacity">6/6 spots</span>
                                 </button>
                                 <button class="time-slot available-slot">
                                     <span class="time">11:30 AM</span>
@@ -501,9 +501,9 @@
                                     <span class="time">2:30 PM</span>
                                     <span class="capacity">2/6 spots</span>
                                 </button>
-                                <button class="time-slot fully-booked-slot" disabled>
+                                <button class="time-slot available-slot">
                                     <span class="time">4:00 PM</span>
-                                    <span class="capacity">6/6 Full</span>
+                                    <span class="capacity">6/6 spots</span>
                                 </button>
                                 <button class="time-slot available-slot">
                                     <span class="time">5:00 PM</span>
@@ -675,15 +675,7 @@
         }
 
         // Mock availability data (which days have spots, how many)
-        const availabilityData = {
-            '2026-02-25': 'available',
-            '2026-02-26': 'available',
-            '2026-02-27': 'partially-booked',
-            '2026-03-01': 'available',
-            '2026-03-02': 'fully-booked',
-            '2026-03-03': 'available',
-            '2026-03-04': 'partially-booked',
-        };
+        const availabilityData = {}; // Slots default to available; only updated on confirmed bookings
 
         function generateCalendar() {
             const year = currentDate.getFullYear();
@@ -1063,16 +1055,16 @@
         // Dark / Light mode toggle
         const themeBtn = document.getElementById('themeToggleBtn');
         const savedTheme = localStorage.getItem('swimpro-theme');
-        if (savedTheme === 'light') {
-            document.body.classList.add('light-mode');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
             if (themeBtn) themeBtn.textContent = '☀️';
         }
         if (themeBtn) {
             themeBtn.addEventListener('click', function() {
-                document.body.classList.toggle('light-mode');
-                const isLight = document.body.classList.contains('light-mode');
-                themeBtn.textContent = isLight ? '☀️' : '🌙';
-                localStorage.setItem('swimpro-theme', isLight ? 'light' : 'dark');
+                document.body.classList.toggle('dark-mode');
+                const isDark = document.body.classList.contains('dark-mode');
+                themeBtn.textContent = isDark ? '☀️' : '🌙';
+                localStorage.setItem('swimpro-theme', isDark ? 'dark' : 'light');
             });
         }
     </script>
