@@ -4,6 +4,12 @@
     box-sizing: border-box;
 }
 
+/* Prevent layout shift when Paystack/modal overlays remove the scrollbar */
+html {
+    scrollbar-gutter: stable;
+    overflow-y: scroll; /* fallback for browsers without scrollbar-gutter */
+}
+
 :root {
     --primary-color: #0066cc;
     --secondary-color: #00a8e8;
