@@ -760,8 +760,8 @@ body {
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
-    animation: scrollTestimonials 25s linear infinite;
-    -webkit-animation: scrollTestimonials 25s linear infinite;
+    animation: scrollTestimonials 45s linear infinite;
+    -webkit-animation: scrollTestimonials 45s linear infinite;
     will-change: transform;
     padding: 0;
 }
@@ -1317,8 +1317,8 @@ body {
     .calendar-date { font-size: 0.9rem; }
 
     /* Testimonials */
-    .testimonials-grid { animation-duration: 40s; gap: 0.75rem; }
-    .testimonial-card { min-width: 80vw; height: auto; padding: 1rem; }
+    .testimonials-grid { animation-duration: 55s; gap: 0.75rem; }
+    .testimonial-card { min-width: 65vw; height: auto; padding: 1rem; }
     .testimonial-info h4 { font-size: 0.85rem; }
     .testimonial-text { font-size: 0.9rem; -webkit-line-clamp: unset; overflow: visible; }
 
@@ -1431,8 +1431,8 @@ body {
         align-items: flex-start;
     }
 
-    .testimonials-grid { gap: 1.5rem; animation: scrollTestimonials 25s linear infinite; -webkit-animation: scrollTestimonials 25s linear infinite; will-change: transform; padding: 1rem 0; }
-    .testimonial-card { min-width: 80vw; height: auto; padding: 1.3rem; border-radius: 12px; }
+    .testimonials-grid { gap: 1.5rem; animation: scrollTestimonials 45s linear infinite; -webkit-animation: scrollTestimonials 45s linear infinite; will-change: transform; padding: 1rem 0; }
+    .testimonial-card { min-width: 65vw; height: auto; padding: 1.3rem; border-radius: 12px; }
     .testimonial-info h4 { font-size: 0.95rem; font-weight: 700; }
     .testimonial-info .role { font-size: 0.8rem; }
     .stars { font-size: 0.8rem; }
@@ -1491,8 +1491,8 @@ body {
 
     .testimonials-grid {
         gap: 1rem;
-        animation: scrollTestimonials 25s linear infinite;
-        -webkit-animation: scrollTestimonials 25s linear infinite;
+        animation: scrollTestimonials 45s linear infinite;
+        -webkit-animation: scrollTestimonials 45s linear infinite;
         will-change: transform;
         display: flex;
         flex-wrap: nowrap;
@@ -1501,7 +1501,7 @@ body {
     }
 
     .testimonial-card {
-        min-width: 82vw;
+        min-width: 65vw;
         height: auto;
         padding: 1.2rem;
         border: 2px solid #404056;
@@ -1569,4 +1569,82 @@ body {
     .logo {
         font-size: 1.3rem;
     }
+}
+
+/* =====================
+   LIGHT MODE THEME
+   ===================== */
+body.light-mode {
+    background: #f0f4f8;
+    color: #1a1a2e;
+}
+
+body.light-mode .hero {
+    background: linear-gradient(135deg, #0066cc 0%, #00a8e8 100%);
+}
+
+body.light-mode .strokes-section,
+body.light-mode .classes-section,
+body.light-mode .services-section,
+body.light-mode .contact-section,
+body.light-mode .booking-calendar-section {
+    background: #f0f4f8;
+}
+
+body.light-mode .stroke-card,
+body.light-mode .pricing-card,
+body.light-mode .comparison-card,
+body.light-mode .benefit,
+body.light-mode .booking-form,
+body.light-mode .contact-info,
+body.light-mode .booking-calendar-wrapper,
+body.light-mode .instructor-card,
+body.light-mode .selected-slot-info {
+    background: #ffffff;
+    color: #1a1a2e;
+    border-color: #d0daea;
+}
+
+body.light-mode .stroke-card h3,
+body.light-mode .pricing-card h3,
+body.light-mode .benefit h4,
+body.light-mode h2, body.light-mode h3, body.light-mode h4 {
+    color: #1a1a2e;
+}
+
+body.light-mode .testimonials-section {
+    background: #1a1a2e; /* keep dark for contrast */
+}
+
+body.light-mode .footer {
+    background: linear-gradient(135deg, #0066cc, #00a8e8);
+}
+
+body.light-mode .admin-section {
+    background: #ffffff;
+}
+
+body.light-mode .time-slot.available-slot {
+    background: #f0fdf4;
+    border-color: #27ae60;
+    color: #1a1a2e;
+}
+
+body.light-mode .time-slot.fully-booked-slot {
+    background: #fef2f2;
+    border-color: #ef4444;
+    color: #999;
+}
+
+body.light-mode .booking-form input,
+body.light-mode .booking-form select,
+body.light-mode .booking-form textarea {
+    background: #f8faff;
+    border-color: #c0d0e8;
+    color: #1a1a2e;
+}
+
+body.light-mode .instructor-header {
+    background: linear-gradient(135deg, #0066cc, #00a8e8);
+    color: white;
 }
