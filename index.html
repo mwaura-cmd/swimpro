@@ -627,7 +627,7 @@
         // Backend base URL — set `window.API_BASE` before this script if needed (ngrok or deployed URL)
         const API_BASE = window.API_BASE || 'https://swimpro-7h93.onrender.com';
         // Fallback to the public key directly — safe to include in frontend code
-        let paystackPublicKey = 'pk_test_71097cc7c455ba34c1d63c61d9ce8d5109065b90';
+        let paystackPublicKey = 'pk_live_450357ba3868b6f1eeb0b99d13e63d207cf6f1bf';
 
         // Try to fetch Paystack public key from backend (overrides fallback if available)
         fetch(`${API_BASE}/api/paystack/config`)
