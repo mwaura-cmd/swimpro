@@ -760,7 +760,7 @@ body {
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
-    animation: scrollTestimonials 60s linear infinite;
+    animation: scrollTestimonials 25s linear infinite;
     padding: 0;
 }
 
@@ -943,21 +943,31 @@ body {
 /* Calendar Grid */
 .calendar-grid {
     margin-bottom: 2rem;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,102,204,0.08);
+    padding: 1.2rem;
+    border: 1px solid #e0ecff;
 }
 
 .calendar-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 0.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     text-align: center;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 10px;
+    padding: 0.4rem 0;
 }
 
 .calendar-weekdays div {
-    font-weight: 600;
-    color: var(--primary-color);
-    padding: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+    padding: 0.6rem 0;
     font-family: 'Poppins', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
 }
 
 .calendar-dates {
@@ -972,13 +982,15 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border: 2px solid #ddd;
+    border: 2px solid #e5e7eb;
     border-radius: 10px;
     cursor: pointer;
-    transition: all 0.3s;
-    font-weight: 500;
+    transition: all 0.2s;
+    font-weight: 600;
+    font-size: 0.9rem;
     position: relative;
     background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .calendar-date.other-month {
@@ -1294,8 +1306,13 @@ body {
     .testimonial-info h4 { font-size: 0.85rem; }
     .testimonial-text { font-size: 0.9rem; -webkit-line-clamp: unset; overflow: visible; }
 
-    /* Booking form */
-    .booking-form { padding: 1.2rem; }
+    /* Booking form — full-width on mobile */
+    .contact-wrapper { flex-direction: column; }
+    .booking-form { padding: 1.2rem; width: 100%; box-sizing: border-box; }
+    .booking-form input,
+    .booking-form select,
+    .booking-form textarea { width: 100%; box-sizing: border-box; font-size: 1rem; padding: 12px 14px; }
+    #priceDisplay { font-size: 0.9rem; }
     #screenshotPreview img { max-width: 100%; height: auto; }
 
     /* Buttons */
@@ -1395,7 +1412,7 @@ body {
         align-items: flex-start;
     }
 
-    .testimonials-grid { gap: 1.5rem; animation: scrollTestimonials 60s linear infinite; padding: 1rem 0; }
+    .testimonials-grid { gap: 1.5rem; animation: scrollTestimonials 25s linear infinite; padding: 1rem 0; }
     .testimonial-card { min-width: 80vw; height: auto; padding: 1.3rem; border-radius: 12px; }
     .testimonial-info h4 { font-size: 0.95rem; font-weight: 700; }
     .testimonial-info .role { font-size: 0.8rem; }
@@ -1403,6 +1420,13 @@ body {
     .testimonial-text { font-size: 0.85rem; line-height: 1.5; -webkit-line-clamp: unset; overflow: visible; }
     .testimonials-container { max-width: 100%; }
     .testimonials-section { min-height: auto; }
+
+    /* Booking form full-width on 768px */
+    .contact-wrapper { flex-direction: column; }
+    .booking-form { padding: 1.2rem; width: 100%; box-sizing: border-box; }
+    .booking-form input,
+    .booking-form select,
+    .booking-form textarea { width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 1rem; }
 }
 
 @media (max-width: 480px) {
@@ -1446,12 +1470,12 @@ body {
 
     .testimonials-grid {
         gap: 1rem;
-        animation: scrollTestimonials 50s linear infinite;
+        animation: scrollTestimonials 25s linear infinite;
         display: flex;
         flex-wrap: nowrap;
         justify-content: flex-start;
         padding: 1rem 0;
-        overflow-x: auto;
+        overflow-x: hidden;
     }
 
     .testimonial-card {
