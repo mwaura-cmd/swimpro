@@ -59,6 +59,16 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="logo">EMBU WAVE MAKERS</div>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Menu">&#9776;</button>
+        </div>
+        <!-- Mobile dropdown menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <a href="#strokes" class="mobile-nav-link"><i class="fas fa-water"></i> Strokes</a>
+            <a href="#classes" class="mobile-nav-link"><i class="fas fa-list-ul"></i> Classes</a>
+            <a href="#services" class="mobile-nav-link"><i class="fas fa-star"></i> Services</a>
+            <a href="#testimonials" class="mobile-nav-link"><i class="fas fa-comments"></i> Reviews</a>
+            <a href="#booking-calendar" class="mobile-nav-link"><i class="fas fa-calendar-check"></i> Book</a>
+            <a href="#contact" class="mobile-nav-link"><i class="fas fa-envelope"></i> Contact</a>
         </div>
     </nav>
 
@@ -951,6 +961,21 @@
 
         // Initialize calendar
         generateCalendar();
+
+        // Hamburger menu toggle
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileNav = document.getElementById('mobileNav');
+        if (hamburgerBtn && mobileNav) {
+            hamburgerBtn.addEventListener('click', function() {
+                mobileNav.classList.toggle('open');
+            });
+            // Close menu when a link is tapped
+            mobileNav.querySelectorAll('.mobile-nav-link').forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileNav.classList.remove('open');
+                });
+            });
+        }
     </script>
 </body>
 </html>
