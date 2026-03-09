@@ -630,8 +630,24 @@
         <div class="container">
             <p>&copy; 2026 SwimPro Swimming Classes. All rights reserved.</p>
             <p>Making swimmers since day one. Excellence in every stroke.</p>
+            <p style="margin-top:10px">
+                <button onclick="showAdminLogin()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:0.75rem;cursor:pointer;text-decoration:underline;">Admin Login</button>
+            </p>
         </div>
     </footer>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:12px;padding:32px 28px;width:320px;max-width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.25);">
+            <h3 style="margin:0 0 16px;font-size:1.2rem;">&#128274; Admin Access</h3>
+            <input id="adminPasswordInput" type="password" placeholder="Enter admin password" style="width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:1rem;box-sizing:border-box;margin-bottom:12px;">
+            <p id="adminLoginError" style="color:#e53935;font-size:0.85rem;margin:0 0 12px;display:none;">Incorrect password. Try again.</p>
+            <div style="display:flex;gap:10px;">
+                <button onclick="submitAdminLogin()" style="flex:1;padding:10px;background:#1a73e8;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;">Login</button>
+                <button onclick="closeAdminLogin()" style="flex:1;padding:10px;background:#f5f5f5;color:#333;border:none;border-radius:8px;font-size:1rem;cursor:pointer;">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Admin Section (visible when ?admin=1 is present) -->
     <section id="adminPanel" class="admin-section" style="display:none; padding:20px; background:#fff;">
@@ -928,12 +944,46 @@
                 document.querySelectorAll('.submit-btn').forEach(btn => { btn.disabled = false; });
             }
 
-            // Admin panel activation: show if URL contains ?admin
+            // Admin panel activation: show if URL contains ?admin (auto-prompts password)
             if (window.location.search.includes('admin')) {
+                showAdminLogin();
+            }
+        });
+
+        // Admin login modal controls
+        const ADMIN_PASSWORD = 'swimpro2026';
+
+        function showAdminLogin() {
+            const modal = document.getElementById('adminLoginModal');
+            modal.style.display = 'flex';
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('adminLoginError').style.display = 'none';
+            setTimeout(() => document.getElementById('adminPasswordInput').focus(), 100);
+        }
+
+        function closeAdminLogin() {
+            document.getElementById('adminLoginModal').style.display = 'none';
+        }
+
+        function submitAdminLogin() {
+            const entered = document.getElementById('adminPasswordInput').value;
+            if (entered === ADMIN_PASSWORD) {
+                closeAdminLogin();
                 const panel = document.getElementById('adminPanel');
                 if (panel) panel.style.display = 'block';
                 loadAdminBookings();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                panel.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                document.getElementById('adminLoginError').style.display = 'block';
+                document.getElementById('adminPasswordInput').value = '';
+                document.getElementById('adminPasswordInput').focus();
+            }
+        }
+
+        // Allow pressing Enter in the password field
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && document.getElementById('adminLoginModal').style.display === 'flex') {
+                submitAdminLogin();
             }
         });
 
