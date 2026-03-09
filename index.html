@@ -11,6 +11,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Paystack Inline JS -->
     <script src="https://js.paystack.co/v2/inline.js"></script>
+    <!-- Firebase SDK (compat — works with plain HTML, no bundler needed) -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics-compat.js"></script>
 </head>
 <body>
     <!-- Vertical Icon Navigation Sidebar -->
@@ -644,6 +648,21 @@
         // Fallback to the public key directly — safe to include in frontend code
         let paystackPublicKey = 'pk_live_450357ba3868b6f1eeb0b99d13e63d207cf6f1bf';
 
+        // ── Firebase ──────────────────────────────────────────────────────────
+        const firebaseConfig = {
+            apiKey: "AIzaSyAdA1wJhm6k0BWcCF4V9Bv92_2GSkfAkLs",
+            authDomain: "swimpro-5598c.firebaseapp.com",
+            projectId: "swimpro-5598c",
+            storageBucket: "swimpro-5598c.firebasestorage.app",
+            messagingSenderId: "451502395907",
+            appId: "1:451502395907:web:b7a3a6959b183afc7e7436",
+            measurementId: "G-Q6QWBE87B1"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        firebase.analytics();
+        // ─────────────────────────────────────────────────────────────────────
+
         // Try to fetch Paystack public key from backend (overrides fallback if available)
         fetch(`${API_BASE}/api/paystack/config`)
             .then(r => { if (!r.ok) throw new Error('Config endpoint returned ' + r.status); return r.json(); })
@@ -716,6 +735,7 @@
                     dateDiv.classList.add('selected');
                     selectedDate = new Date(year, month, day);
                     updateSelectedDateDisplay();
+                    listenToSlotAvailability(selectedDate);
                 }
                 
                 dateDiv.textContent = day;
@@ -725,6 +745,7 @@
                     dateDiv.classList.add('selected');
                     selectedDate = new Date(year, month, day);
                     updateSelectedDateDisplay();
+                    listenToSlotAvailability(selectedDate);
                 });
                 
                 calendarDates.appendChild(dateDiv);
@@ -785,6 +806,21 @@
                                 localStorage.setItem('paystackPaid', 'true');
                                 localStorage.setItem('paystackRef', transaction.reference);
                                 document.querySelectorAll('.confirm-booking-btn').forEach(btn => { btn.disabled = false; btn.classList.add('enabled'); });
+                                // Save to Firestore so slot count updates in real-time
+                                const slotText = document.getElementById('selectedSlotInfo')?.textContent || '';
+                                const slotParts = slotText.split(' - ');
+                                db.collection('bookings').add({
+                                    email: email,
+                                    plan: plan,
+                                    category: cat,
+                                    amount: amount,
+                                    instructor: (slotParts[0] || '').replace(/.*Instructor:\s*/i, '').trim(),
+                                    time: (slotParts[1] || '').trim(),
+                                    date: selectedDate ? (selectedDate.getFullYear() + '-' + String(selectedDate.getMonth()+1).padStart(2,'0') + '-' + String(selectedDate.getDate()).padStart(2,'0')) : '',
+                                    reference: transaction.reference,
+                                    status: 'confirmed',
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                }).catch(e => console.error('Firestore save error:', e));
                                 alert('Payment successful! Your booking is confirmed.');
                             } else {
                                 alert('Payment could not be verified. Please contact support.');
@@ -820,6 +856,9 @@
                 const name = form.querySelector('input[name="name"]').value.trim();
                 const category = form.querySelector('select[name="category"]').value;
                 const paymentPlan = form.querySelector('select[name="paymentPlan"]').value;
+                const bookingPhone = (form.querySelector('input[name="phone"]')?.value || '').trim();
+                const bookingDate = form.querySelector('input[name="date"]')?.value || '';
+                const bookingStroke = form.querySelector('select[name="stroke"]')?.value || '';
                 const pricingMap = {
                     daily:   { adult: 200,  student: 150  },
                     monthly: { adult: 5000, student: 4000 }
@@ -863,6 +902,15 @@
                                     .then(r => r.json())
                                     .then(d => {
                                         if (d.verified) {
+                                            // Save to Firestore
+                                            db.collection('bookings').add({
+                                                name, email, phone: bookingPhone,
+                                                category, plan: paymentPlan, amount,
+                                                date: bookingDate, stroke: bookingStroke,
+                                                reference: transaction.reference,
+                                                status: 'confirmed',
+                                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                            }).catch(e => console.error('Firestore save error:', e));
                                             form.reset();
                                             alert('Payment successful! Your booking is confirmed.');
                                         } else {
@@ -1007,6 +1055,47 @@
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 document.getElementById('selectedDate').textContent = selectedDate.toLocaleDateString('en-US', options);
             }
+        }
+
+        // Real-time Firestore slot availability listener
+        let _slotUnsubscribe = null;
+        function listenToSlotAvailability(date) {
+            if (_slotUnsubscribe) { _slotUnsubscribe(); _slotUnsubscribe = null; }
+            if (!date) return;
+            const d = date;
+            const dateStr = d.getFullYear() + '-' +
+                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0');
+            _slotUnsubscribe = db.collection('bookings')
+                .where('date', '==', dateStr)
+                .onSnapshot(snapshot => {
+                    const counts = {};
+                    snapshot.forEach(doc => {
+                        const b = doc.data();
+                        if (b.status !== 'confirmed') return;
+                        const key = (b.instructor || '') + '||' + (b.time || '');
+                        counts[key] = (counts[key] || 0) + 1;
+                    });
+                    document.querySelectorAll('.instructor-slots .time-slot').forEach(slot => {
+                        const h4 = slot.closest('.instructor-card')?.querySelector('.instructor-header h4');
+                        const instructor = (h4?.textContent || '').replace(/.*Instructor:\s*/i, '').trim();
+                        const time = slot.querySelector('.time')?.textContent?.trim() || '';
+                        const booked = counts[instructor + '||' + time] || 0;
+                        const remaining = 6 - booked;
+                        const capSpan = slot.querySelector('.capacity');
+                        if (remaining <= 0) {
+                            if (capSpan) capSpan.textContent = '6/6 Full';
+                            slot.classList.remove('available-slot');
+                            slot.classList.add('fully-booked-slot');
+                            slot.disabled = true;
+                        } else {
+                            if (capSpan) capSpan.textContent = booked + '/6 spots';
+                            slot.classList.remove('fully-booked-slot');
+                            slot.classList.add('available-slot');
+                            slot.disabled = false;
+                        }
+                    });
+                }, err => console.error('Firestore slot listener:', err));
         }
 
         // Month navigation
