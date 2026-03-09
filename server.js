@@ -11,6 +11,22 @@ const crypto = require('crypto');
 
 const app = express();
 
+// ------------ Admin auth config ------------
+// Set ADMIN_PASSWORD in your Render environment variables (never hardcode it)
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD
+    ? crypto.createHash('sha256').update(process.env.ADMIN_PASSWORD).digest('hex')
+    : null;
+
+// In-memory session tokens (cleared on server restart — intentional)
+const adminSessions = new Set();
+
+function requireAdminToken(req, res, next) {
+    const token = req.headers['x-admin-token'] || req.query.adminToken;
+    if (!token || !adminSessions.has(token)) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    next();
+}
 // ------------ Paystack config ------------
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || '';
 const PAYSTACK_PUBLIC_KEY = process.env.PAYSTACK_PUBLIC_KEY || '';
@@ -95,6 +111,22 @@ app.use(express.static(__dirname));
 app.use('/uploads', express.static(UPLOAD_DIR));
 
 // ------------ Paystack integration ------------
+
+// Admin login — validates password server-side, returns a session token
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Password required' });
+    if (!ADMIN_PASSWORD_HASH) return res.status(503).json({ error: 'Admin not configured on server' });
+    const submitted = crypto.createHash('sha256').update(password).digest('hex');
+    if (submitted !== ADMIN_PASSWORD_HASH) {
+        return res.status(401).json({ error: 'Incorrect password' });
+    }
+    const token = crypto.randomBytes(32).toString('hex');
+    adminSessions.add(token);
+    // Auto-expire token after 2 hours
+    setTimeout(() => adminSessions.delete(token), 2 * 60 * 60 * 1000);
+    res.json({ token });
+});
 
 // Return public key to the frontend (never expose the secret key)
 app.get('/api/paystack/config', (req, res) => {
@@ -190,14 +222,14 @@ app.post('/api/bookings', upload.single('screenshot'), (req, res) => {
   res.json(b);
 });
 
-// List bookings
-app.get('/api/bookings', (req, res) => {
+// List bookings — admin only
+app.get('/api/bookings', requireAdminToken, (req, res) => {
   const bookings = readBookings();
   res.json(bookings);
 });
 
-// Confirm booking
-app.put('/api/bookings/:id/confirm', (req, res) => {
+// Confirm booking — admin only
+app.put('/api/bookings/:id/confirm', requireAdminToken, (req, res) => {
   const bookings = readBookings();
   const id = req.params.id;
   const idx = bookings.findIndex(x => x.id === id);

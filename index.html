@@ -911,23 +911,21 @@
             if (planSel) planSel.addEventListener('change', updatePrice);
         })();
 
-        // on load, check paid state and enable buttons if previously marked
+        // on load, check if admin URL trigger
         document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('paystackPaid') === 'true') {
-                document.querySelectorAll('.confirm-booking-btn').forEach(btn => { btn.disabled = false; btn.classList.add('enabled'); });
-                document.querySelectorAll('.submit-btn').forEach(btn => { btn.disabled = false; });
-            }
-
-            // Admin panel activation: show if URL contains ?admin (auto-prompts password)
+            // Admin panel activation: show if URL contains ?admin
             if (window.location.search.includes('admin')) {
                 showAdminLogin();
             }
         });
 
         // Admin login modal controls
-        const ADMIN_PASSWORD = 'swimpro2026';
+        // Password is checked server-side — never stored in frontend code
+        let _adminToken = sessionStorage.getItem('swimpro-admin-token') || null;
 
         function showAdminLogin() {
+            // If we already have a valid token, go straight to panel
+            if (_adminToken) { _openAdminPanel(); return; }
             const modal = document.getElementById('adminLoginModal');
             modal.style.display = 'flex';
             document.getElementById('adminPasswordInput').value = '';
@@ -939,15 +937,28 @@
             document.getElementById('adminLoginModal').style.display = 'none';
         }
 
-        function submitAdminLogin() {
+        function _openAdminPanel() {
+            closeAdminLogin();
+            const panel = document.getElementById('adminPanel');
+            if (panel) { panel.style.display = 'block'; panel.scrollIntoView({ behavior: 'smooth' }); }
+            loadAdminBookings();
+        }
+
+        async function submitAdminLogin() {
             const entered = document.getElementById('adminPasswordInput').value;
-            if (entered === ADMIN_PASSWORD) {
-                closeAdminLogin();
-                const panel = document.getElementById('adminPanel');
-                if (panel) panel.style.display = 'block';
-                loadAdminBookings();
-                panel.scrollIntoView({ behavior: 'smooth' });
-            } else {
+            if (!entered) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: entered })
+                });
+                if (!res.ok) throw new Error('fail');
+                const data = await res.json();
+                _adminToken = data.token;
+                sessionStorage.setItem('swimpro-admin-token', _adminToken);
+                _openAdminPanel();
+            } catch {
                 document.getElementById('adminLoginError').style.display = 'block';
                 document.getElementById('adminPasswordInput').value = '';
                 document.getElementById('adminPasswordInput').focus();
@@ -961,13 +972,27 @@
             }
         });
 
+        // Helper: escape user content to prevent XSS in admin panel
+        function esc(str) {
+            return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
         // Admin functions
         async function loadAdminBookings() {
             const container = document.getElementById('adminBookings');
             if (!container) return;
             container.innerHTML = '<p>Loading...</p>';
+            if (!_adminToken) { container.innerHTML = '<p>Not authenticated.</p>'; return; }
             try {
-                const res = await fetch(`${API_BASE}/api/bookings`);
+                const res = await fetch(`${API_BASE}/api/bookings`, {
+                    headers: { 'x-admin-token': _adminToken }
+                });
+                if (res.status === 401) {
+                    sessionStorage.removeItem('swimpro-admin-token');
+                    _adminToken = null;
+                    container.innerHTML = '<p>Session expired. Please log in again.</p>';
+                    return;
+                }
                 const data = await res.json();
                 if (!Array.isArray(data) || data.length === 0) {
                     container.innerHTML = '<p>No bookings yet.</p>';
@@ -977,16 +1002,17 @@
                 data.reverse().forEach(b => {
                     const div = document.createElement('div');
                     div.className = 'admin-booking';
+                    const imgHtml = b.screenshot
+                        ? `<img src="${esc(b.screenshot)}" alt="screenshot">`
+                        : '<div style="width:120px;height:80px;background:#f2f6ff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#99a;">No image</div>';
                     div.innerHTML = `
-                        <div>
-                            ${b.screenshot ? `<img src="${b.screenshot}" alt="screenshot">` : '<div style="width:120px;height:80px;background:#f2f6ff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#99a;">No image</div>'}
-                        </div>
+                        <div>${imgHtml}</div>
                         <div class="info">
-                            <div><strong>${b.name || (b.form && b.form.name) || '—'}</strong> <span class="meta">${b.phone || (b.form && b.form.phone) || ''}</span></div>
-                            <div class="meta">Date: ${b.date || (b.form && b.form.date) || ''} &nbsp; Status: <strong>${b.status}</strong></div>
-                            <div style="margin-top:6px">Message: ${b.message || (b.form && b.form.message) || ''}</div>
+                            <div><strong>${esc(b.name)}</strong> <span class="meta">${esc(b.phone)}</span></div>
+                            <div class="meta">Date: ${esc(b.date)} &nbsp; Status: <strong>${esc(b.status)}</strong></div>
+                            <div style="margin-top:6px">Message: ${esc(b.message)}</div>
                             <div class="admin-actions" style="margin-top:8px">
-                                <button class="admin-confirm" onclick="confirmBooking('${b.id}')">Confirm</button>
+                                <button class="admin-confirm" onclick="adminConfirmBooking('${esc(b.id)}')">Confirm</button>
                                 <button class="admin-refresh" onclick="loadAdminBookings()">Refresh</button>
                             </div>
                         </div>`;
@@ -997,9 +1023,12 @@
             }
         }
 
-        function confirmBooking(id) {
+        function adminConfirmBooking(id) {
             if (!confirm('Mark booking ' + id + ' as confirmed?')) return;
-            fetch(`${API_BASE}/api/bookings/${id}/confirm`, { method: 'PUT' })
+            fetch(`${API_BASE}/api/bookings/${id}/confirm`, {
+                method: 'PUT',
+                headers: { 'x-admin-token': _adminToken }
+            })
                 .then(r => r.json())
                 .then(() => loadAdminBookings())
                 .catch(() => alert('Failed to confirm booking'));
