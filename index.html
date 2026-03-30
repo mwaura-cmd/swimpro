@@ -80,6 +80,13 @@
             justify-content: center;
         }
 
+        @media (max-width: 480px) {
+            .sidebar-header {
+                padding: 16px 12px;
+                min-height: 56px;
+            }
+        }
+
         .sidebar-logo {
             font-size: 1.5rem;
             font-weight: 700;
@@ -139,6 +146,14 @@
             cursor: pointer;
             font-size: 0.9rem;
             white-space: nowrap;
+            min-height: 44px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-nav-link {
+                min-height: 48px;
+                padding: 14px 12px;
+            }
         }
 
         .sidebar-nav-link:hover {
@@ -207,6 +222,14 @@
             height: 32px;
         }
 
+        @media (max-width: 468px) {
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 0.85rem;
+            }
+        }
+
         .user-info {
             display: flex;
             flex-direction: column;
@@ -254,6 +277,15 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            min-height: var(--header-height);
+        }
+
+        @media (max-width: 480px) {
+            .content-header {
+                padding: 0 10px;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
         }
 
         .header-left {
@@ -294,11 +326,22 @@
             color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.3s;
+            min-width: 36px;
+            min-height: 36px;
         }
 
         .header-icon-btn:hover {
             color: var(--accent-blue);
             border-color: var(--accent-blue);
+        }
+
+        @media (max-width: 768px) {
+            .header-icon-btn {
+                width: 40px;
+                height: 40px;
+                min-width: 40px;
+                min-height: 40px;
+            }
         }
 
         .cta-buttons {
@@ -320,6 +363,8 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            min-height: 36px;
+            justify-content: center;
         }
 
         .btn-login:hover {
@@ -336,6 +381,14 @@
         .btn-admin:hover {
             background: var(--accent-blue);
             color: white;
+        }
+
+        @media (max-width: 480px) {
+            .btn-login, .btn-admin {
+                min-height: 40px;
+                padding: 8px 12px;
+                font-size: 0.75rem;
+            }
         }
 
         .content-scroll {
@@ -480,6 +533,17 @@
         .pricing-card:hover {
             border-color: var(--accent-blue);
             transform: translateY(-2px);
+        }
+
+        @media (max-width: 480px) {
+            .pricing-card {
+                padding: 16px;
+                border-radius: 8px;
+            }
+
+            .pricing-card:hover {
+                transform: none;
+            }
         }
 
         .pricing-header {
@@ -642,10 +706,27 @@
             font-weight: 600;
             font-size: 0.8rem;
             transition: opacity 0.3s;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
 
         .watch-btn:hover {
             opacity: 0.9;
+        }
+
+        .watch-btn:active {
+            transform: scale(0.98);
+        }
+
+        @media (max-width: 480px) {
+            .watch-btn {
+                min-height: 40px;
+                font-size: 0.75rem;
+                padding: 10px 12px;
+            }
         }
 
         /* ===== TESTIMONIAL CARDS ===== */
@@ -657,6 +738,14 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .testimonial-card {
+                padding: 14px;
+                border-radius: 8px;
+                gap: 10px;
+            }
         }
 
         .testimonial-header {
@@ -739,6 +828,10 @@
             font-size: 0.9rem;
             border-bottom: 2px solid transparent;
             transition: all 0.3s;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .tab-btn:hover {
@@ -748,6 +841,14 @@
         .tab-btn.active {
             color: var(--accent-blue);
             border-bottom-color: var(--accent-blue);
+        }
+
+        @media (max-width: 480px) {
+            .tab-btn {
+                padding: 10px 12px;
+                font-size: 0.8rem;
+                min-height: 40px;
+            }
         }
 
         /* ===== HAMBURGER ===== */
@@ -761,6 +862,242 @@
         }
 
         /* ===== RESPONSIVE ===== */
+        /* Extra Small Devices (Very small phones) */
+        @media (max-width: 320px) {
+            :root {
+                --header-height: 55px;
+            }
+
+            body {
+                font-size: 13px;
+            }
+
+            .page-title-section h1 {
+                font-size: 1rem;
+            }
+
+            .section-title {
+                font-size: 1.2rem;
+            }
+
+            .card-content {
+                padding: 12px;
+                gap: 12px;
+            }
+
+            .card-header {
+                padding: 12px 16px;
+            }
+
+            .btn-login, .btn-admin {
+                padding: 6px 10px;
+                font-size: 0.65rem;
+            }
+
+            .btn-login span, .btn-admin span {
+                display: none;
+            }
+
+            .cta-buttons {
+                gap: 4px;
+            }
+
+            .header-icon-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 0.9rem;
+            }
+
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .pricing-card {
+                padding: 12px;
+            }
+
+            .benefit-card {
+                padding: 12px;
+            }
+
+            .training-clip-card {
+                margin-bottom: 12px;
+            }
+
+            .clip-thumbnail {
+                height: 120px;
+            }
+
+            .clip-info {
+                padding: 12px;
+            }
+        }
+
+        /* Small Devices (Small phones) */
+        @media (max-width: 480px) {
+            :root {
+                --header-height: 56px;
+            }
+
+            body {
+                font-size: 14px;
+            }
+
+            .page-title-section h1 {
+                font-size: 1.1rem;
+            }
+
+            .page-title-section p {
+                display: none;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+
+            .section-subtitle {
+                font-size: 0.85rem;
+                margin-bottom: 16px;
+            }
+
+            .content-header {
+                padding: 0 12px;
+                gap: 10px;
+            }
+
+            .content-scroll {
+                padding: 12px;
+            }
+
+            .card {
+                border-radius: 8px;
+                margin-bottom: 16px;
+            }
+
+            .card-header {
+                padding: 12px 16px;
+            }
+
+            .card-title {
+                font-size: 0.95rem;
+            }
+
+            .card-content {
+                padding: 16px;
+            }
+
+            .btn-login, .btn-admin {
+                padding: 8px 12px;
+                font-size: 0.75rem;
+                min-height: 32px;
+            }
+
+            .btn-login span, .btn-admin span {
+                display: inline;
+            }
+
+            .header-icon-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                gap: 8px;
+                width: auto;
+            }
+
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .stroke-card {
+                border-radius: 8px;
+            }
+
+            .stroke-video {
+                height: 160px;
+            }
+
+            .stroke-info {
+                padding: 12px;
+            }
+
+            .stroke-name {
+                font-size: 0.95rem;
+            }
+
+            .stroke-description {
+                font-size: 0.8rem;
+            }
+
+            .pricing-card {
+                padding: 16px;
+            }
+
+            .pricing-title {
+                font-size: 1rem;
+            }
+
+            .price-features li {
+                font-size: 0.8rem;
+            }
+
+            .benefit-card {
+                padding: 14px;
+            }
+
+            .benefit-title {
+                font-size: 0.9rem;
+            }
+
+            .benefit-desc {
+                font-size: 0.8rem;
+            }
+
+            .training-clip-card {
+                border-radius: 8px;
+            }
+
+            .clip-thumbnail {
+                height: 140px;
+            }
+
+            .clip-info {
+                padding: 14px;
+            }
+
+            .clip-title {
+                font-size: 0.9rem;
+            }
+
+            .testimonial-card {
+                padding: 14px;
+            }
+
+            .testimonial-name {
+                font-size: 0.85rem;
+            }
+
+            .testimonial-text {
+                font-size: 0.8rem;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+                margin-bottom: 12px;
+            }
+
+            .tab-btn {
+                padding: 10px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Tablet/Larger Phones */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -777,6 +1114,8 @@
 
             .hamburger-btn {
                 display: block;
+                min-width: 40px;
+                min-height: 40px;
             }
 
             .page-title-section p {
@@ -784,16 +1123,34 @@
             }
 
             .cta-buttons {
-                gap: 6px;
+                gap: 8px;
             }
 
             .btn-login, .btn-admin {
-                padding: 6px 12px;
-                font-size: 0.75rem;
+                padding: 8px 14px;
+                font-size: 0.8rem;
+                min-height: 36px;
             }
 
             .grid-2, .grid-3, .grid-4 {
                 grid-template-columns: 1fr;
+            }
+
+            .page-title-section h1 {
+                font-size: 1.2rem;
+            }
+
+            .content-scroll {
+                padding: 16px;
+            }
+
+            .card-content {
+                padding: 16px;
+            }
+
+            .header-icon-btn {
+                width: 40px;
+                height: 40px;
             }
         }
 
