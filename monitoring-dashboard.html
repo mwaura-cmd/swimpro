@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwimPro - Monitoring Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-bg: #0f1419;
+            --darker-bg: #0a0f14;
+            --card-bg: #1a232f;
+            --border-color: #2a3f5f;
+            --text-primary: #e1e8f0;
+            --text-secondary: #a0afc0;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            
+            --sidebar-width: 240px;
+            --sidebar-collapsed: 80px;
+            --header-height: 60px;
+            --right-panel-width: 320px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ===== MAIN CONTAINER (100vh) ===== */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ===== LEFT SIDEBAR ===== */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--darker-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+            transition: width 0.3s ease;
+            position: relative;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed);
+        }
+
+        .sidebar-header {
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            justify-content: center;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .sidebar-title {
+            display: none;
+        }
+
+        .sidebar-toggle {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .sidebar-toggle:hover {
+            color: var(--accent-blue);
+        }
+
+        .sidebar.collapsed .sidebar-toggle {
+            display: none;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 8px;
+            overflow-y: auto;
+            list-style: none;
+        }
+
+        .sidebar-nav-item {
+            padding: 0;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .sidebar-nav-link:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+
+        .sidebar-nav-link.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+            border-left: 3px solid var(--accent-blue);
+            padding-left: 9px;
+        }
+
+        .sidebar-nav-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-nav-label {
+            flex: 1;
+        }
+
+        .sidebar.collapsed .sidebar-nav-label {
+            display: none;
+        }
+
+        .sidebar-footer {
+            padding: 16px 8px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .upgrade-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+        }
+
+        .upgrade-btn:hover {
+            opacity: 0.9;
+        }
+
+        .sidebar.collapsed .upgrade-btn span {
+            display: none;
+        }
+
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .sidebar-user:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .sidebar.collapsed .user-avatar {
+            width: 32px;
+            height: 32px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 0.85rem;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-status {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .sidebar.collapsed .user-info {
+            display: none;
+        }
+
+        /* ===== MAIN CONTENT AREA ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== HEADER ===== */
+        .content-header {
+            height: var(--header-height);
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            gap: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        .page-title-section h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .page-title-section p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin: 4px 0 0 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            width: 200px;
+        }
+
+        .search-box input {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            outline: none;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-box i {
+            color: var(--text-secondary);
+        }
+
+        .header-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: opacity 0.3s;
+        }
+
+        .header-btn:hover {
+            opacity: 0.9;
+        }
+
+        .header-icon-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .header-icon-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        /* ===== CONTENT AREA (SCROLLABLE) ===== */
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            gap: 0;
+        }
+
+        .content-main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--dark-bg);
+        }
+
+        /* ===== RIGHT SIDEBAR (STATS PANEL) ===== */
+        .sidebar-right {
+            width: var(--right-panel-width);
+            background: var(--card-bg);
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.green {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+        }
+
+        .stat-icon.blue {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+
+        .stat-icon.yellow {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-yellow);
+        }
+
+        .stat-icon.red {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-change.positive {
+            color: var(--accent-green);
+        }
+
+        .stat-change.negative {
+            color: var(--accent-red);
+        }
+
+        /* ===== CARDS IN MAIN CONTENT ===== */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .badge.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-yellow);
+        }
+
+        .badge.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        .badge.info {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .card-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ===== STATUS GRID ===== */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .status-item {
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            transition: border-color 0.3s;
+        }
+
+        .status-item:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .status-indicator.online {
+            background: var(--accent-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .status-indicator.offline {
+            background: var(--accent-red);
+        }
+
+        .status-indicator.warning {
+            background: var(--accent-yellow);
+        }
+
+        .status-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .status-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .status-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .status-uptime {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        /* ===== TABLE ===== */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--darker-bg);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .data-table tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1400px) {
+            :root {
+                --right-panel-width: 280px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: var(--sidebar-collapsed);
+            }
+
+            .sidebar.collapsed {
+                width: var(--sidebar-width);
+            }
+
+            .sidebar-toggle {
+                display: block !important;
+            }
+
+            .sidebar-title {
+                display: none !important;
+            }
+
+            .sidebar.collapsed .sidebar-title {
+                display: block !important;
+            }
+
+            .sidebar.collapsed .toggles {
+                display: none;
+            }
+
+            .sidebar-right {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 12px 20px;
+                gap: 12px;
+            }
+
+            .stat-card {
+                min-width: 200px;
+            }
+
+            .search-box {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                z-index: 1000;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .hamburger-btn {
+                display: block;
+            }
+
+            .sidebar-right {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: hidden;
+                min-height: 120px;
+                padding: 12px 20px;
+            }
+
+            .stat-card {
+                min-width: 160px;
+                padding: 12px;
+            }
+
+            .header-btn {
+                display: none;
+            }
+
+            .page-title-section p {
+                display: none;
+            }
+
+            .content-header {
+                height: 50px;
+                padding: 0 15px;
+            }
+
+            .content-main {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-icon-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 0.9rem;
+            }
+
+            .page-title-section h1 {
+                font-size: 1.1rem;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .card-header-right {
+                align-self: flex-end;
+            }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* ===== GRID LAYOUT ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .grid.grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+
+        .grid.grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        @media (max-width: 1024px) {
+            .grid.grid-3 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid.grid-3,
+            .grid.grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            color: var(--accent-blue);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* ===== COMPACT MONITORING STATUS ===== */
+        .monitor-card {
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .monitor-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .monitor-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .monitor-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .monitor-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 6px;
+            font-weight: 600;
+            color: var(--accent-green);
+            font-size: 0.85rem;
+        }
+
+        .monitor-status.down {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-water"></i>
+                </div>
+                <div class="sidebar-title">SwimPro</div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link active" data-section="dashboard">
+                        <i class="fas fa-chart-line"></i>
+                        <span class="sidebar-nav-label">Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="monitors">
+                        <i class="fas fa-video"></i>
+                        <span class="sidebar-nav-label">Classes</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="bookings">
+                        <i class="fas fa-calendar-check"></i>
+                        <span class="sidebar-nav-label">Bookings</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="students">
+                        <i class="fas fa-users"></i>
+                        <span class="sidebar-nav-label">Students</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="incidents">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span class="sidebar-nav-label">Incidents</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="reports">
+                        <i class="fas fa-file-chart-line"></i>
+                        <span class="sidebar-nav-label">Reports</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="settings">
+                        <i class="fas fa-cog"></i>
+                        <span class="sidebar-nav-label">Settings</span>
+                    </a>
+                </li>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="upgrade-btn">
+                    <i class="fas fa-crown"></i>
+                    <span>Upgrade Pro</span>
+                </button>
+                <div class="sidebar-user">
+                    <div class="user-avatar">D</div>
+                    <div class="user-info">
+                        <div class="user-name">Denis</div>
+                        <div class="user-status">Admin</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="main-content">
+            <!-- HEADER -->
+            <div class="content-header">
+                <div class="header-left">
+                    <button class="hamburger-btn" id="hamburgerBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-title-section">
+                        <h1 id="pageTitle">Dashboard</h1>
+                        <p id="pageSubtitle">System overview and key metrics</p>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search classes...">
+                    </div>
+                    <button class="header-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>New Class</span>
+                    </button>
+                    <button class="header-icon-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button class="header-icon-btn" title="Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTENT WRAPPER (Scrollable main + right sidebar) -->
+            <div class="content-wrapper">
+                <!-- MAIN CONTENT (Scrollable) -->
+                <div class="content-main" id="contentMain">
+                    <!-- DASHBOARD VIEW -->
+                    <div id="dashboard-view" class="view-section">
+                        <!-- System Status Summary -->
+                        <div class="card" style="margin-bottom: 20px;">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <i class="fas fa-heartbeat" style="margin-right: 8px; color: var(--accent-green);"></i>
+                                    System Status
+                                </h2>
+                                <div class="card-header-right">
+                                    <span class="badge success">
+                                        <i class="fas fa-check-circle"></i> All Systems Operational
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <div class="status-grid">
+                                    <div class="status-item">
+                                        <div class="status-indicator online"></div>
+                                        <div class="status-info">
+                                            <div class="status-name">Class Booking System</div>
+                                            <div class="status-meta">Last checked: 2 min ago</div>
+                                            <div class="status-uptime">99.98% Uptime</div>
+                                        </div>
+                                    </div>
+                                    <div class="status-item">
+                                        <div class="status-indicator online"></div>
+                                        <div class="status-info">
+                                            <div class="status-name">Payment Gateway</div>
+                                            <div class="status-meta">Last checked: 1 min ago</div>
+                                            <div class="status-uptime">100% Uptime</div>
+                                        </div>
+                                    </div>
+                                    <div class="status-item">
+                                        <div class="status-indicator online"></div>
+                                        <div class="status-info">
+                                            <div class="status-name">Email Service</div>
+                                            <div class="status-meta">Last checked: 3 min ago</div>
+                                            <div class="status-uptime">99.95% Uptime</div>
+                                        </div>
+                                    </div>
+                                    <div class="status-item">
+                                        <div class="status-indicator online"></div>
+                                        <div class="status-info">
+                                            <div class="status-name">API Server</div>
+                                            <div class="status-meta">Last checked: 1 min ago</div>
+                                            <div class="status-uptime">99.99% Uptime</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Monitors -->
+                        <div class="card" style="margin-bottom: 20px;">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <i class="fas fa-video" style="margin-right: 8px; color: var(--accent-blue);"></i>
+                                    Active Classes
+                                </h2>
+                                <div class="card-header-right">
+                                    <span style="font-size: 0.9rem; color: var(--text-secondary);">4 Total Classes</span>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <div class="monitor-card">
+                                    <div class="monitor-info">
+                                        <div class="monitor-name">Freestyle Basics — Denis Mwaura</div>
+                                        <div class="monitor-stats">
+                                            <span><i class="fas fa-users"></i> 6/8 students</span>
+                                            <span><i class="fas fa-clock"></i> 10:00 AM - 11:00 AM</span>
+                                            <span><i class="fas fa-crown"></i> Premium</span>
+                                        </div>
+                                    </div>
+                                    <div class="monitor-status">
+                                        <span class="pulse" style="width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; display: inline-block;"></span>
+                                        Live
+                                    </div>
+                                </div>
+                                <div class="monitor-card">
+                                    <div class="monitor-info">
+                                        <div class="monitor-name">Backstroke Advanced — Kennedy Munyua</div>
+                                        <div class="monitor-stats">
+                                            <span><i class="fas fa-users"></i> 5/6 students</span>
+                                            <span><i class="fas fa-clock"></i> 2:00 PM - 3:00 PM</span>
+                                            <span><i class="fas fa-star"></i> Advanced</span>
+                                        </div>
+                                    </div>
+                                    <div class="monitor-status">
+                                        <span class="pulse" style="width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; display: inline-block;"></span>
+                                        Scheduled
+                                    </div>
+                                </div>
+                                <div class="monitor-card">
+                                    <div class="monitor-info">
+                                        <div class="monitor-name">Butterfly Power — Kennedy Munyua</div>
+                                        <div class="monitor-stats">
+                                            <span><i class="fas fa-users"></i> 6/6 students</span>
+                                            <span><i class="fas fa-clock"></i> 4:00 PM - 5:00 PM</span>
+                                            <span><i class="fas fa-fire"></i> Elite</span>
+                                        </div>
+                                    </div>
+                                    <div class="monitor-status down">
+                                        <span style="width: 8px; height: 8px; background: var(--accent-red); border-radius: 50%; display: inline-block; margin-right: 6px;"></span>
+                                        Full
+                                    </div>
+                                </div>
+                                <div class="monitor-card">
+                                    <div class="monitor-info">
+                                        <div class="monitor-name">Swimming Basics — Denis Mwaura</div>
+                                        <div class="monitor-stats">
+                                            <span><i class="fas fa-users"></i> 3/8 students</span>
+                                            <span><i class="fas fa-clock"></i> 5:30 PM - 6:30 PM</span>
+                                            <span><i class="fas fa-graduation-cap"></i> Beginner</span>
+                                        </div>
+                                    </div>
+                                    <div class="monitor-status">
+                                        <span class="pulse" style="width: 8px; height: 8px; background: var(--accent-yellow); border-radius: 50%; display: inline-block;"></span>
+                                        Available
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Bookings Table -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <i class="fas fa-check-circle" style="margin-right: 8px; color: var(--accent-green);"></i>
+                                    Recent Bookings
+                                </h2>
+                                <div class="card-header-right">
+                                    <span class="badge info">12 This Week</span>
+                                </div>
+                            </div>
+                            <div class="card-content" style="padding: 0;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Student Name</th>
+                                            <th>Class</th>
+                                            <th>Date & Time</th>
+                                            <th>Status</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>John Kipchoge</td>
+                                            <td>Freestyle Basics</td>
+                                            <td>Mar 30, 10:00 AM</td>
+                                            <td><span class="badge success"><i class="fas fa-check"></i> Confirmed</span></td>
+                                            <td>KSh 200</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Sarah Mutua</td>
+                                            <td>Backstroke Advanced</td>
+                                            <td>Mar 30, 2:00 PM</td>
+                                            <td><span class="badge success"><i class="fas fa-check"></i> Confirmed</span></td>
+                                            <td>KSh 500</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Peter Ochieng</td>
+                                            <td>Butterfly Power</td>
+                                            <td>Mar 30, 4:00 PM</td>
+                                            <td><span class="badge warning"><i class="fas fa-clock"></i> Pending</span></td>
+                                            <td>KSh 500</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Alice Njoroge</td>
+                                            <td>Swimming Basics</td>
+                                            <td>Mar 30, 5:30 PM</td>
+                                            <td><span class="badge success"><i class="fas fa-check"></i> Confirmed</span></td>
+                                            <td>KSh 150</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OTHER VIEWS (Hidden by default) -->
+                    <div id="monitors-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">All Classes</h2>
+                            </div>
+                            <div class="card-content">
+                                <p style="color: var(--text-secondary);">Classes view content here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="bookings-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Bookings Management</h2>
+                            </div>
+                            <div class="card-content">
+                                <p style="color: var(--text-secondary);">Bookings view content here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="students-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Student Directory</h2>
+                            </div>
+                            <div class="card-content">
+                                <p style="color: var(--text-secondary);">Students view content here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="incidents-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Incidents & Alerts</h2>
+                            </div>
+                            <div class="card-content">
+                                <p style="color: var(--text-secondary);">Incidents view content here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="reports-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Analytics Reports</h2>
+                            </div>
+                            <div class="card-content">
+                                <p style="color: var(--text-secondary);">Reports view content here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="settings-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Settings</h2>
+                            </div>
+                            <div class="card-content">
+                                <p style="color: var(--text-secondary);">Settings view content here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT SIDEBAR (STATS PANEL) -->
+                <div class="sidebar-right" id="sidebarRight">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon green">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="stat-label">Total Members</div>
+                                <div class="stat-value">48</div>
+                            </div>
+                        </div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> +5 this month
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon blue">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="stat-label">Bookings Today</div>
+                                <div class="stat-value">12</div>
+                            </div>
+                        </div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 2 pending
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon yellow">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="stat-label">Revenue (MTD)</div>
+                                <div class="stat-value">KSh 58K</div>
+                            </div>
+                        </div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> +12% vs last month
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon green">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="stat-label">System Uptime</div>
+                                <div class="stat-value">99.98%</div>
+                            </div>
+                        </div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-check-circle"></i> All Good
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon purple">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="stat-label">Avg Rating</div>
+                                <div class="stat-value">4.8/5</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--accent-yellow);">
+                            ★★★★★ 128 reviews
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== SIDEBAR TOGGLE =====
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+        hamburgerBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+
+        // ===== NAVIGATION =====
+        const navLinks = document.querySelectorAll('.sidebar-nav-link');
+        const viewSections = document.querySelectorAll('.view-section');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = e.currentTarget.dataset.section;
+
+                // Update active nav link
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                // Show/hide sections
+                viewSections.forEach(v => v.style.display = 'none');
+                document.getElementById(`${section}-view`).style.display = 'block';
+
+                // Update page title
+                const titles = {
+                    dashboard: 'Dashboard',
+                    monitors: 'Active Classes',
+                    bookings: 'Bookings',
+                    students: 'Student Directory',
+                    incidents: 'Incidents & Alerts',
+                    reports: 'Analytics Reports',
+                    settings: 'Settings'
+                };
+                document.getElementById('pageTitle').textContent = titles[section];
+
+                // Close sidebar on mobile
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        });
+
+        // ===== THEME TOGGLE =====
+        document.querySelector('[title="Theme"]').addEventListener('click', function() {
+            document.documentElement.style.setProperty('--dark-bg', '#ffffff');
+            document.documentElement.style.setProperty('--darker-bg', '#f5f5f5');
+            document.documentElement.style.setProperty('--card-bg', '#ffffff');
+            document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
+            document.documentElement.style.setProperty('--text-secondary', '#666666');
+            this.innerHTML = '<i class="fas fa-sun"></i>';
+        });
+    </script>
+</body>
+</html>
