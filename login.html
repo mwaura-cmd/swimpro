@@ -7,10 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -513,24 +509,9 @@
     </div>
 
     <script>
-        // ===== FIREBASE CONFIGURATION =====
-        const firebaseConfig = {
-            apiKey: "AIzaSyAdA1wJhm6k0BwCCF4V9Bv92_2GSkfAkLs",
-            authDomain: "swimpro-5598c.firebaseapp.com",
-            projectId: "swimpro-5598c",
-            storageBucket: "swimpro-5598c.firebasestorage.app",
-            messagingSenderId: "451502395907",
-            appId: "1:451502395907:web:b7a3a6959b103afc7e7434",
-            measurementId: "G-Q6QWBE87B1"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
         // ===== ADMIN CONFIGURATION =====
         const ADMIN_EMAIL = 'denismwaura548@gmail.com'; // Only email allowed for admin login
+        const ADMIN_PASSWORD = 'admin123'; // Temporary - will be replaced with real backend
 
         let selectedUserType = {
             login: 'student',
@@ -578,101 +559,9 @@
             document.getElementById(`${form}Success`).classList.remove('show');
         }
 
-        function signInWithGoogle(form) {
-            const userType = selectedUserType[form];
-            
-            // Admin email validation
-            if (userType === 'admin') {
-                showError(`Admin access restricted to ${ADMIN_EMAIL} only`, 'login');
-                return;
-            }
-            
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .then(async (result) => {
-                    const user = result.user;
-                    
-                    // Create/update user document in Firestore
-                    await db.collection('users').doc(user.uid).set({
-                        uid: user.uid,
-                        name: user.displayName || 'User',
-                        email: user.email,
-                        photoURL: user.photoURL || 'https://via.placeholder.com/100',
-                        userType: userType,
-                        loginMethod: 'google',
-                        loginTime: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
-                    
-                    // Store in localStorage for quick access
-                    const userData = {
-                        uid: user.uid,
-                        name: user.displayName || 'User',
-                        email: user.email,
-                        photoURL: user.photoURL,
-                        userType: userType,
-                        loginMethod: 'google',
-                        loginTime: new Date().toISOString()
-                    };
-                    localStorage.setItem('swimproUser', JSON.stringify(userData));
-                    
-                    // Redirect to appropriate dashboard
-                    window.location.href = userType === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
-                })
-                .catch((error) => {
-                    console.error('Google Sign-In Error:', error);
-                    showError(error.message || 'Failed to sign in with Google', 'login');
-                });
-        }
+        function signInWithGoogle(form) {\n            showError('Google Sign-In will be configured with Firebase. Coming soon!', form);\n        }
 
-        function signUpWithGoogle() {
-            const userType = selectedUserType.signup;
-            
-            // Prevent admin signup via Google
-            if (userType === 'admin') {
-                showError('Admin account cannot be created via signup. Contact administrator.', 'signup');
-                return;
-            }
-            
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .then(async (result) => {
-                    const user = result.user;
-                    
-                    // Create new user document in Firestore
-                    await db.collection('users').doc(user.uid).set({
-                        uid: user.uid,
-                        name: user.displayName || 'User',
-                        email: user.email,
-                        photoURL: user.photoURL || 'https://via.placeholder.com/100',
-                        userType: userType,
-                        loginMethod: 'google',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    });
-                    
-                    // Store in localStorage for quick access
-                    const userData = {
-                        uid: user.uid,
-                        name: user.displayName || 'User',
-                        email: user.email,
-                        photoURL: user.photoURL,
-                        userType: userType,
-                        loginMethod: 'google',
-                        createdAt: new Date().toISOString()
-                    };
-                    localStorage.setItem('swimproUser', JSON.stringify(userData));
-                    
-                    showSuccess('Account created successfully! Redirecting...', 'signup');
-                    setTimeout(() => {
-                        window.location.href = userType === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
-                    }, 1500);
-                })
-                .catch((error) => {
-                    console.error('Google Sign-Up Error:', error);
-                    showError(error.message || 'Failed to create account with Google', 'signup');
-                });
-        }
+        function signUpWithGoogle() {\n            showError('Google Sign-Up will be configured with Firebase. Coming soon!', 'signup');\n        }
 
         function loginWithEmail(event) {
             event.preventDefault();
@@ -694,62 +583,27 @@
                     showError(`Admin access is restricted to ${ADMIN_EMAIL} only`, 'login');
                     return;
                 }
+                if (password !== ADMIN_PASSWORD) {
+                    showError('Invalid admin password', 'login');
+                    return;
+                }
             }
 
-            // Sign in with Firebase
-            auth.signInWithEmailAndPassword(email, password)
-                .then(async (result) => {
-                    const user = result.user;
-                    
-                    // Get/update user document in Firestore
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    
-                    if (!userDoc.exists) {
-                        // Create new user if doesn't exist
-                        await db.collection('users').doc(user.uid).set({
-                            uid: user.uid,
-                            name: user.displayName || email.split('@')[0],
-                            email: user.email,
-                            photoURL: user.photoURL || 'https://via.placeholder.com/100',
-                            userType: selectedUserType.login,
-                            loginMethod: 'email',
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString()
-                        });
-                    } else if (userDoc.data().userType !== selectedUserType.login) {
-                        // Update user type if changed
-                        await db.collection('users').doc(user.uid).update({
-                            userType: selectedUserType.login,
-                            updatedAt: new Date().toISOString()
-                        });
-                    }
-                    
-                    const userData = userDoc.data() || {};
-                    const loginData = {
-                        uid: user.uid,
-                        name: userData.name || user.displayName || email.split('@')[0],
-                        email: user.email,
-                        photoURL: userData.photoURL || user.photoURL,
-                        userType: selectedUserType.login,
-                        loginMethod: 'email',
-                        loginTime: new Date().toISOString()
-                    };
-                    
-                    localStorage.setItem('swimproUser', JSON.stringify(loginData));
-                    
-                    // Redirect
-                    window.location.href = selectedUserType.login === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
-                })
-                .catch((error) => {
-                    console.error('Email Login Error:', error);
-                    if (error.code === 'auth/user-not-found') {
-                        showError('Email not found. Please sign up first.', 'login');
-                    } else if (error.code === 'auth/wrong-password') {
-                        showError('Incorrect password. Please try again.', 'login');
-                    } else {
-                        showError(error.message || 'Failed to sign in', 'login');
-                    }
-                });
+            // Mock authentication with localStorage
+            const user = {
+                id: 'user_' + Math.random().toString(36).substr(2, 9),
+                name: email.split('@')[0],
+                email: email,
+                userType: selectedUserType.login,
+                loginMethod: 'email',
+                loginTime: new Date().toISOString()
+            };
+
+            localStorage.setItem('swimproUser', JSON.stringify(user));
+            localStorage.setItem('swimproToken', 'token_' + Math.random().toString(36).substr(2, 20));
+
+            // Redirect
+            window.location.href = selectedUserType.login === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
         }
 
         function signupWithEmail(event) {
@@ -785,74 +639,37 @@
                 return;
             }
 
-            // Create account with Firebase
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(async (result) => {
-                    const user = result.user;
-                    
-                    // Update display name
-                    await user.updateProfile({ displayName: name });
-                    
-                    // Create user document in Firestore
-                    await db.collection('users').doc(user.uid).set({
-                        uid: user.uid,
-                        name: name,
-                        email: email,
-                        photoURL: 'https://via.placeholder.com/100',
-                        userType: selectedUserType.signup,
-                        loginMethod: 'email',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    });
-                    
-                    // Store in localStorage
-                    const userData = {
-                        uid: user.uid,
-                        name: name,
-                        email: email,
-                        photoURL: 'https://via.placeholder.com/100',
-                        userType: selectedUserType.signup,
-                        loginMethod: 'email',
-                        createdAt: new Date().toISOString()
-                    };
-                    localStorage.setItem('swimproUser', JSON.stringify(userData));
-                    
-                    showSuccess('Account created successfully! Redirecting...', 'signup');
-                    setTimeout(() => {
-                        window.location.href = selectedUserType.signup === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
-                    }, 1500);
-                })
-                .catch((error) => {
-                    console.error('Email Signup Error:', error);
-                    if (error.code === 'auth/email-already-in-use') {
-                        showError('Email already in use. Please sign in or use a different email.', 'signup');
-                    } else if (error.code === 'auth/weak-password') {
-                        showError('Password is too weak. Use at least 6 characters.', 'signup');
-                    } else {
-                        showError(error.message || 'Failed to create account', 'signup');
-                    }
-                });
+            // Mock account creation with localStorage
+            const user = {
+                id: 'user_' + Math.random().toString(36).substr(2, 9),
+                name: name,
+                email: email,
+                userType: selectedUserType.signup,
+                loginMethod: 'email',
+                createdAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('swimproUser', JSON.stringify(user));
+            localStorage.setItem('swimproToken', 'token_' + Math.random().toString(36).substr(2, 20));
+
+            showSuccess('Account created successfully! Redirecting...', 'signup');
+            setTimeout(() => {
+                window.location.href = selectedUserType.signup === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
+            }, 1500);
         }
 
-        // Check if user is already logged in (Firebase auth state)
-        auth.onAuthStateChanged((user) => {
+        // Check if user is already logged in
+        window.addEventListener('load', () => {
+            const user = localStorage.getItem('swimproUser');
             if (user) {
-                // User is logged in
-                const userType = localStorage.getItem('swimproUser') ? JSON.parse(localStorage.getItem('swimproUser')).userType : 'student';
-                if (userType === 'admin') {
+                const userData = JSON.parse(user);
+                if (userData.userType === 'admin') {
                     window.location.href = 'monitoring-dashboard.html';
                 } else {
                     window.location.href = 'student-dashboard.html';
                 }
             }
         });
-
-        // Handle Google credential response (for future OAuth integration)
-        function handleCredentialResponse(response) {
-            console.log('Google Sign-In Response:', response);
-            // Decode JWT and handle authentication
-            signInWithGoogle('login');
-        }
     </script>
 </body>
 </html>
