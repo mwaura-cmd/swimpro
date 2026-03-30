@@ -615,6 +615,44 @@
             document.getElementById(`${form}Success`).classList.remove('show');
         }
 
+        // Signup cooldown to prevent rapid retries (mitigates email rate limit errors)
+        function startSignupCooldown(seconds) {
+            const form = document.getElementById('emailSignupForm');
+            if (!form) return;
+            const btn = form.querySelector('button[type="submit"]');
+            if (!btn) return;
+            const orig = btn.dataset.origText || btn.textContent;
+            btn.dataset.origText = orig;
+            btn.disabled = true;
+            let remaining = Math.max(1, Math.floor(seconds));
+            btn.textContent = `Try again (${remaining}s)`;
+            const endAt = Date.now() + remaining * 1000;
+            sessionStorage.setItem('signupCooldownUntil', String(endAt));
+
+            const iv = setInterval(() => {
+                const now = Date.now();
+                const rem = Math.ceil((endAt - now) / 1000);
+                if (rem <= 0) {
+                    clearInterval(iv);
+                    btn.disabled = false;
+                    btn.textContent = btn.dataset.origText || orig;
+                    sessionStorage.removeItem('signupCooldownUntil');
+                    return;
+                }
+                btn.textContent = `Try again (${rem}s)`;
+            }, 1000);
+        }
+
+        function restoreSignupCooldownIfAny() {
+            const until = sessionStorage.getItem('signupCooldownUntil');
+            if (!until) return;
+            const endAt = Number(until);
+            const now = Date.now();
+            const rem = Math.ceil((endAt - now) / 1000);
+            if (rem > 0) startSignupCooldown(rem);
+            else sessionStorage.removeItem('signupCooldownUntil');
+        }
+
         function signInWithGoogle(form) {
             showError('Google Sign-In is not enabled yet. Use email and password for now.', form);
         }
@@ -744,6 +782,8 @@
                     showError(`Admin signup is restricted to ${ADMIN_EMAIL}`, 'signup');
                     return;
                 }
+                // Start a short cooldown to prevent immediate retries
+                startSignupCooldown(30);
 
                 // Sign up with Supabase Auth
                 const { data: authData, error: signupError } = await supabaseClient.auth.signUp({
@@ -761,6 +801,8 @@
                     const msg = (signupError.message || '').toLowerCase();
                     if (msg.includes('rate limit')) {
                         showError('Too many signup attempts. Wait a minute, then try again or use Login if this account already exists.', 'signup');
+                        // apply longer cooldown on rate limit
+                        startSignupCooldown(60);
                         return;
                     }
 
@@ -816,6 +858,8 @@
         window.addEventListener('load', () => {
             // Initialize singleton client.
             getSupabase();
+            // Restore signup cooldown if any
+            restoreSignupCooldownIfAny();
 
             // Check if user is already logged in
             const user = localStorage.getItem('swimproUser');
