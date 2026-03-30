@@ -559,9 +559,13 @@
             document.getElementById(`${form}Success`).classList.remove('show');
         }
 
-        function signInWithGoogle(form) {\n            showError('Google Sign-In will be configured with Firebase. Coming soon!', form);\n        }
+        function signInWithGoogle(form) {
+            showError('Google Sign-In will be configured with Firebase. Coming soon!', form);
+        }
 
-        function signUpWithGoogle() {\n            showError('Google Sign-Up will be configured with Firebase. Coming soon!', 'signup');\n        }
+        function signUpWithGoogle() {
+            showError('Google Sign-Up will be configured with Firebase. Coming soon!', 'signup');
+        }
 
         function loginWithEmail(event) {
             event.preventDefault();
