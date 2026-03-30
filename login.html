@@ -516,7 +516,11 @@
         // ===== SUPABASE CONFIGURATION =====
         const SUPABASE_URL = 'https://rvpgoyufmegaqxvlwddi.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
-        let supabase = null;
+        
+        // Supabase client will be initialized after SDK loads
+        function getSupabase() {
+            return window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        }
 
         // ===== ADMIN CONFIGURATION =====
         const ADMIN_EMAIL = 'denismwaura548@gmail.com'; // Only email allowed for admin login
@@ -580,7 +584,8 @@
             event.preventDefault();
             hideError('login');
             
-            if (!supabase) {
+            const supabaseClient = getSupabase();
+            if (!supabaseClient) {
                 showError('Database connection initializing... please try again', 'login');
                 return;
             }
@@ -597,7 +602,7 @@
 
             try {
                 // Query Supabase for user by email
-                const { data: users, error: queryError } = await supabase
+                const { data: users, error: queryError } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('email', email.toLowerCase());
@@ -660,7 +665,8 @@
             hideError('signup');
             hideSuccess('signup');
             
-            if (!supabase) {
+            const supabaseClient = getSupabase();
+            if (!supabaseClient) {
                 showError('Database connection initializing... please try again', 'signup');
                 return;
             }
@@ -695,7 +701,7 @@
 
             try {
                 // Check if email already exists
-                const { data: existingUsers, error: checkError } = await supabase
+                const { data: existingUsers, error: checkError } = await supabaseClient
                     .from('users')
                     .select('email')
                     .eq('email', email.toLowerCase());
@@ -716,7 +722,7 @@
                 const passwordHash = await bcryptjs.hash(password, saltRounds);
 
                 // Insert user into Supabase
-                const { data: newUser, error: insertError } = await supabase
+                const { data: newUser, error: insertError } = await supabaseClient
                     .from('users')
                     .insert([
                         {
@@ -760,22 +766,18 @@
             }
         }
 
-        // Check if user is already logged in
-        // Initialize Supabase client and admin user
+        // Initialize app and create admin user if needed
         async function initializeApp() {
             try {
-                // Initialize Supabase client
-                if (!supabase && window.supabase) {
-                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                }
-
-                if (!supabase) {
-                    console.error('Supabase SDK not loaded');
+                const supabaseClient = getSupabase();
+                
+                if (!supabaseClient) {
+                    console.log('Supabase SDK not yet loaded');
                     return;
                 }
 
                 // Create admin user if not exists
-                const { data: adminUser, error: checkError } = await supabase
+                const { data: adminUser, error: checkError } = await supabaseClient
                     .from('users')
                     .select('id')
                     .eq('email', ADMIN_EMAIL.toLowerCase())
@@ -784,7 +786,7 @@
                 if (!adminUser && !checkError) {
                     // Admin doesn't exist, create it
                     const passwordHash = await bcryptjs.hash(ADMIN_PASSWORD, 10);
-                    await supabase
+                    await supabaseClient
                         .from('users')
                         .insert([
                             {
@@ -800,37 +802,6 @@
                 }
             } catch (error) {
                 console.log('App initialization completed or skipped');
-            }
-        }
-
-        // Initialize admin user if not exists
-        async function initializeAdminUser() {
-            try {
-                const { data: adminUser, error: checkError } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('email', ADMIN_EMAIL.toLowerCase())
-                    .single();
-
-                if (!adminUser && !checkError) {
-                    // Admin doesn't exist, create it
-                    const passwordHash = await bcryptjs.hash(ADMIN_PASSWORD, 10);
-                    await supabase
-                        .from('users')
-                        .insert([
-                            {
-                                email: ADMIN_EMAIL.toLowerCase(),
-                                password_hash: passwordHash,
-                                name: 'Admin',
-                                user_type: 'admin',
-                                created_at: new Date().toISOString(),
-                                updated_at: new Date().toISOString()
-                            }
-                        ]);
-                    console.log('Admin user initialized');
-                }
-            } catch (error) {
-                console.log('Admin initialization check completed or skipped');
             }
         }
 
