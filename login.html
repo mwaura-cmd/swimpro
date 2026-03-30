@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwimPro - Login & Sign Up</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-bg: #0f1419;
+            --darker-bg: #0a0f14;
+            --card-bg: #1a232f;
+            --border-color: #2a3f5f;
+            --text-primary: #e1e8f0;
+            --text-secondary: #a0afc0;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--darker-bg) 0%, #1a1f2e 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .logo i {
+            color: var(--accent-blue);
+            margin-right: 8px;
+        }
+
+        .auth-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .auth-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .auth-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .google-signin-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .google-signin-wrapper ::part(button) {
+            width: 100% !important;
+            height: 44px !important;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .divider-text {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            padding: 10px 14px;
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .submit-btn {
+            padding: 12px 16px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+        }
+
+        .submit-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn.loading {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .user-type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .user-type-btn {
+            padding: 12px 16px;
+            background: transparent;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .user-type-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .user-type-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .auth-switch-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .auth-switch-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .auth-switch-link:hover {
+            color: #2563eb;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: none;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .error-message.show {
+            display: flex;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #86efac;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: none;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .success-message.show {
+            display: flex;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 16px;
+        }
+
+        .checkbox-input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--accent-blue);
+        }
+
+        .checkbox-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .checkbox-label a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        .checkbox-label a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 24px;
+            }
+
+            .auth-title {
+                font-size: 1.3rem;
+            }
+
+            .user-type-selector {
+                gap: 8px;
+            }
+
+            .form-input {
+                padding: 10px 12px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            .submit-btn {
+                font-size: 0.9rem;
+            }
+        }
+
+        .google-signin-wrapper {
+            margin: 0;
+        }
+
+        /* Hide default Google button and create custom */
+        #g_id_onload {
+            display: none;
+        }
+
+        .custom-google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: white;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            min-height: 44px;
+            font-family: inherit;
+        }
+
+        .custom-google-btn:hover {
+            background: #f9fafb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-google-btn img {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Login Form -->
+        <div id="loginForm" class="auth-card">
+            <div class="auth-header">
+                <div class="logo">
+                    <i class="fas fa-water"></i>SwimPro
+                </div>
+                <h1 class="auth-title">Welcome Back</h1>
+                <p class="auth-subtitle">Sign in to your SwimPro account</p>
+            </div>
+
+            <div class="auth-content">
+                <div class="error-message" id="loginError">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="loginErrorText"></span>
+                </div>
+
+                <div class="user-type-selector">
+                    <button class="user-type-btn active" data-type="student" onclick="selectUserType('student', 'login')">
+                        <i class="fas fa-graduation-cap"></i> Student
+                    </button>
+                    <button class="user-type-btn" data-type="admin" onclick="selectUserType('admin', 'login')">
+                        <i class="fas fa-lock"></i> Admin
+                    </button>
+                </div>
+
+                <!-- Google Sign In -->
+                <div id="g_id_onload" 
+                     data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                     data-callback="handleCredentialResponse">
+                </div>
+                <button class="custom-google-btn" onclick="signInWithGoogle('login')">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19c1.33-4.02 5.3-7.44 9.46-7.44z'/%3E%3Cpath fill='%234285F4' d='M46.1 24.52c0-1.45-.15-2.85-.41-4.22H24v7.84h11.52c-.26 1.37-.64 2.74-1.15 4.01l8.51 6.62c.9-2.22 1.56-4.78 1.56-7.44z'/%3E%3Cpath fill='%234285F4' d='M24 46.3c5.94 0 10.92-1.97 14.56-5.36l-8.51-6.62c-1.99 1.36-4.55 2.15-7.05 2.15-5.4 0-9.99-3.6-11.63-8.44l-8.15 6.32C6.51 41.62 14.62 46.3 24 46.3z'/%3E%3Cpath fill='%34A853' d='M12.34 28.02c-.36-.9-.57-1.85-.57-2.85 0-1 .2-1.95.57-2.85l-8.15-6.32c-.95 1.92-1.5 4.09-1.5 6.42 0 2.33.55 4.5 1.5 6.42l8.15-6.32z'/%3E%3C/svg%3E" alt="Google">
+                    Continue with Google
+                </button>
+
+                <div class="divider">
+                    <div class="divider-line"></div>
+                    <div class="divider-text">OR</div>
+                    <div class="divider-line"></div>
+                </div>
+
+                <form id="emailLoginForm" onsubmit="loginWithEmail(event)">
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" placeholder="you@example.com" required class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" placeholder="••••••••" required class="form-input">
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                </form>
+
+                <div class="auth-switch">
+                    <span class="auth-switch-text">Don't have an account? </span>
+                    <a class="auth-switch-link" onclick="switchToSignUp()">Sign up</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sign Up Form -->
+        <div id="signupForm" class="auth-card" style="display: none;">
+            <div class="auth-header">
+                <div class="logo">
+                    <i class="fas fa-water"></i>SwimPro
+                </div>
+                <h1 class="auth-title">Create Account</h1>
+                <p class="auth-subtitle">Join SwimPro and start your swimming journey</p>
+            </div>
+
+            <div class="auth-content">
+                <div class="error-message" id="signupError">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="signupErrorText"></span>
+                </div>
+
+                <div class="success-message" id="signupSuccess">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="signupSuccessText"></span>
+                </div>
+
+                <div class="user-type-selector">
+                    <button class="user-type-btn active" data-type="student" onclick="selectUserType('student', 'signup')">
+                        <i class="fas fa-graduation-cap"></i> Student
+                    </button>
+                    <button class="user-type-btn" data-type="admin" onclick="selectUserType('admin', 'signup')">
+                        <i class="fas fa-lock"></i> Admin
+                    </button>
+                </div>
+
+                <!-- Google Sign Up -->
+                <button class="custom-google-btn" onclick="signUpWithGoogle()">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19c1.33-4.02 5.3-7.44 9.46-7.44z'/%3E%3Cpath fill='%234285F4' d='M46.1 24.52c0-1.45-.15-2.85-.41-4.22H24v7.84h11.52c-.26 1.37-.64 2.74-1.15 4.01l8.51 6.62c.9-2.22 1.56-4.78 1.56-7.44z'/%3E%3Cpath fill='%234285F4' d='M24 46.3c5.94 0 10.92-1.97 14.56-5.36l-8.51-6.62c-1.99 1.36-4.55 2.15-7.05 2.15-5.4 0-9.99-3.6-11.63-8.44l-8.15 6.32C6.51 41.62 14.62 46.3 24 46.3z'/%3E%3Cpath fill='%34A853' d='M12.34 28.02c-.36-.9-.57-1.85-.57-2.85 0-1 .2-1.95.57-2.85l-8.15-6.32c-.95 1.92-1.5 4.09-1.5 6.42 0 2.33.55 4.5 1.5 6.42l8.15-6.32z'/%3E%3C/svg%3E" alt="Google">
+                    Sign up with Google
+                </button>
+
+                <div class="divider">
+                    <div class="divider-line"></div>
+                    <div class="divider-text">OR</div>
+                    <div class="divider-line"></div>
+                </div>
+
+                <form id="emailSignupForm" onsubmit="signupWithEmail(event)">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" placeholder="John Kipchoge" required class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" placeholder="you@example.com" required class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" placeholder="••••••••" required class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" placeholder="••••••••" required class="form-input">
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="termsCheckbox" required class="checkbox-input">
+                        <label for="termsCheckbox" class="checkbox-label">
+                            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="submit-btn" style="margin-top: 20px;">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                </form>
+
+                <div class="auth-switch">
+                    <span class="auth-switch-text">Already have an account? </span>
+                    <a class="auth-switch-link" onclick="switchToLogin()">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedUserType = {
+            login: 'student',
+            signup: 'student'
+        };
+
+        function selectUserType(type, form) {
+            selectedUserType[form] = type;
+            const formId = form === 'login' ? 'loginForm' : 'signupForm';
+            document.querySelectorAll(`#${formId} .user-type-btn`).forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.user-type-btn').classList.add('active');
+        }
+
+        function switchToSignUp() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'block';
+        }
+
+        function switchToLogin() {
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+        }
+
+        function showError(message, form) {
+            const errorEl = document.getElementById(`${form}Error`);
+            const errorText = document.getElementById(`${form}ErrorText`);
+            errorText.textContent = message;
+            errorEl.classList.add('show');
+        }
+
+        function hideError(form) {
+            document.getElementById(`${form}Error`).classList.remove('show');
+        }
+
+        function showSuccess(message, form) {
+            const successEl = document.getElementById(`${form}Success`);
+            const successText = document.getElementById(`${form}SuccessText`);
+            successText.textContent = message;
+            successEl.classList.add('show');
+        }
+
+        function hideSuccess(form) {
+            document.getElementById(`${form}Success`).classList.remove('show');
+        }
+
+        function signInWithGoogle(form) {
+            const userType = selectedUserType[form];
+            
+            // Store user info in localStorage (in production, send to backend)
+            const mockGoogleUser = {
+                id: 'google_' + Math.random().toString(36).substr(2, 9),
+                name: 'John Kipchoge',
+                email: 'john@swimpro.ke',
+                picture: 'https://via.placeholder.com/100',
+                userType: userType,
+                loginMethod: 'google',
+                loginTime: new Date().toISOString()
+            };
+
+            localStorage.setItem('swimproUser', JSON.stringify(mockGoogleUser));
+            
+            // Redirect to appropriate dashboard
+            if (userType === 'admin') {
+                window.location.href = 'monitoring-dashboard.html';
+            } else {
+                window.location.href = 'student-dashboard.html';
+            }
+        }
+
+        function signUpWithGoogle() {
+            const userType = selectedUserType.signup;
+            
+            const mockGoogleUser = {
+                id: 'google_' + Math.random().toString(36).substr(2, 9),
+                name: 'New User',
+                email: 'newuser@swimpro.ke',
+                picture: 'https://via.placeholder.com/100',
+                userType: userType,
+                loginMethod: 'google',
+                createdAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('swimproUser', JSON.stringify(mockGoogleUser));
+            
+            showSuccess('Account created successfully! Redirecting...', 'signup');
+            setTimeout(() => {
+                if (userType === 'admin') {
+                    window.location.href = 'monitoring-dashboard.html';
+                } else {
+                    window.location.href = 'student-dashboard.html';
+                }
+            }, 1500);
+        }
+
+        function loginWithEmail(event) {
+            event.preventDefault();
+            hideError('login');
+            
+            const form = event.target;
+            const email = form.querySelector('input[type="email"]').value;
+            const password = form.querySelector('input[type="password"]').value;
+
+            // Validation
+            if (!email || !password) {
+                showError('Please fill in all fields', 'login');
+                return;
+            }
+
+            // Mock authentication (in production, send to backend API)
+            const user = {
+                id: 'user_' + Math.random().toString(36).substr(2, 9),
+                name: email.split('@')[0],
+                email: email,
+                userType: selectedUserType.login,
+                loginMethod: 'email',
+                loginTime: new Date().toISOString()
+            };
+
+            localStorage.setItem('swimproUser', JSON.stringify(user));
+            localStorage.setItem('swimproToken', 'mock_token_' + Math.random().toString(36).substr(2, 20));
+
+            // Redirect
+            if (selectedUserType.login === 'admin') {
+                window.location.href = 'monitoring-dashboard.html';
+            } else {
+                window.location.href = 'student-dashboard.html';
+            }
+        }
+
+        function signupWithEmail(event) {
+            event.preventDefault();
+            hideError('signup');
+            hideSuccess('signup');
+            
+            const form = event.target;
+            const name = form.querySelector('input[type="text"]').value;
+            const email = form.querySelectorAll('input[type="email"]')[0].value;
+            const password = form.querySelectorAll('input[type="password"]')[0].value;
+            const confirmPassword = form.querySelectorAll('input[type="password"]')[1].value;
+            const termsAccepted = document.getElementById('termsCheckbox').checked;
+
+            // Validation
+            if (!name || !email || !password || !confirmPassword) {
+                showError('Please fill in all fields', 'signup');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError('Passwords do not match', 'signup');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters', 'signup');
+                return;
+            }
+
+            if (!termsAccepted) {
+                showError('Please accept the Terms of Service and Privacy Policy', 'signup');
+                return;
+            }
+
+            // Mock account creation (in production, send to backend API)
+            const user = {
+                id: 'user_' + Math.random().toString(36).substr(2, 9),
+                name: name,
+                email: email,
+                userType: selectedUserType.signup,
+                loginMethod: 'email',
+                createdAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('swimproUser', JSON.stringify(user));
+            localStorage.setItem('swimproToken', 'mock_token_' + Math.random().toString(36).substr(2, 20));
+
+            showSuccess('Account created successfully! Redirecting...', 'signup');
+            setTimeout(() => {
+                if (selectedUserType.signup === 'admin') {
+                    window.location.href = 'monitoring-dashboard.html';
+                } else {
+                    window.location.href = 'student-dashboard.html';
+                }
+            }, 1500);
+        }
+
+        // Check if user is already logged in
+        window.addEventListener('load', () => {
+            const user = localStorage.getItem('swimproUser');
+            if (user) {
+                const userData = JSON.parse(user);
+                if (userData.userType === 'admin') {
+                    window.location.href = 'monitoring-dashboard.html';
+                } else {
+                    window.location.href = 'student-dashboard.html';
+                }
+            }
+        });
+
+        // Handle Google credential response (for future OAuth integration)
+        function handleCredentialResponse(response) {
+            console.log('Google Sign-In Response:', response);
+            // Decode JWT and handle authentication
+            signInWithGoogle('login');
+        }
+    </script>
+</body>
+</html>

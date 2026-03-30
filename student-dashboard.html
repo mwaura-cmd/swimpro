@@ -857,14 +857,14 @@
             </nav>
 
             <div class="sidebar-footer">
-                <button class="logout-btn">
+                <button class="logout-btn" id="logoutBtn">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Logout</span>
                 </button>
-                <div class="sidebar-user">
-                    <div class="user-avatar">J</div>
+                <div class="sidebar-user" id="userProfile">
+                    <div class="user-avatar" id="userAvatar">J</div>
                     <div class="user-info">
-                        <div class="user-name">John Kipchoge</div>
+                        <div class="user-name" id="userName">John Kipchoge</div>
                         <div class="user-status">Student</div>
                     </div>
                 </div>
@@ -1261,6 +1261,40 @@
     </div>
 
     <script>
+        // ===== AUTHENTICATION CHECK =====
+        function checkAuthentication() {
+            const user = localStorage.getItem('swimproUser');
+            if (!user) {
+                window.location.href = 'login.html';
+                return null;
+            }
+            
+            const userData = JSON.parse(user);
+            if (userData.userType !== 'student') {
+                window.location.href = 'login.html';
+                return null;
+            }
+            
+            return userData;
+        }
+
+        // Initialize user data on page load
+        window.addEventListener('load', () => {
+            const user = checkAuthentication();
+            if (user) {
+                updateUserProfile(user);
+            }
+        });
+
+        function updateUserProfile(user) {
+            const userName = user.name || 'Student';
+            const firstLetter = userName.charAt(0).toUpperCase();
+            
+            document.getElementById('userName').textContent = userName;
+            document.getElementById('userAvatar').textContent = firstLetter;
+            document.getElementById('pageSubtitle').textContent = `Welcome back, ${userName}! Ready to swim?`;
+        }
+
         // ===== SIDEBAR TOGGLE =====
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
@@ -1334,10 +1368,11 @@
         });
 
         // ===== LOGOUT =====
-        document.querySelector('.logout-btn').addEventListener('click', () => {
+        document.getElementById('logoutBtn').addEventListener('click', () => {
             if (confirm('Are you sure you want to logout?')) {
-                alert('Logged out successfully!');
-                // window.location.href = '/';
+                localStorage.removeItem('swimproUser');
+                localStorage.removeItem('swimproToken');
+                window.location.href = 'login.html';
             }
         });
     </script>

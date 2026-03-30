@@ -173,28 +173,29 @@
             gap: 12px;
         }
 
-        .upgrade-btn {
+        .logout-btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             padding: 10px 12px;
-            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
-            color: white;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             font-size: 0.85rem;
-            transition: opacity 0.3s;
+            transition: all 0.3s;
             white-space: nowrap;
         }
 
-        .upgrade-btn:hover {
-            opacity: 0.9;
+        .logout-btn:hover {
+            opacity: 0.8;
+            background: rgba(239, 68, 68, 0.2);
         }
 
-        .sidebar.collapsed .upgrade-btn span {
+        .sidebar.collapsed .logout-btn span {
             display: none;
         }
 
@@ -971,14 +972,14 @@
             </nav>
 
             <div class="sidebar-footer">
-                <button class="upgrade-btn">
-                    <i class="fas fa-crown"></i>
-                    <span>Upgrade Pro</span>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
                 </button>
-                <div class="sidebar-user">
-                    <div class="user-avatar">D</div>
+                <div class="sidebar-user" id="userProfile">
+                    <div class="user-avatar" id="userAvatar">D</div>
                     <div class="user-info">
-                        <div class="user-name">Denis</div>
+                        <div class="user-name" id="userName">Denis</div>
                         <div class="user-status">Admin</div>
                     </div>
                 </div>
@@ -1352,6 +1353,39 @@
     </div>
 
     <script>
+        // ===== AUTHENTICATION CHECK =====
+        function checkAuthentication() {
+            const user = localStorage.getItem('swimproUser');
+            if (!user) {
+                window.location.href = 'login.html';
+                return null;
+            }
+            
+            const userData = JSON.parse(user);
+            if (userData.userType !== 'admin') {
+                window.location.href = 'login.html';
+                return null;
+            }
+            
+            return userData;
+        }
+
+        // Initialize user data on page load
+        window.addEventListener('load', () => {
+            const user = checkAuthentication();
+            if (user) {
+                updateUserProfile(user);
+            }
+        });
+
+        function updateUserProfile(user) {
+            const userName = user.name || 'Admin';
+            const firstLetter = userName.charAt(0).toUpperCase();
+            
+            document.getElementById('userName').textContent = userName;
+            document.getElementById('userAvatar').textContent = firstLetter;
+        }
+
         // ===== SIDEBAR TOGGLE =====
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
@@ -1418,6 +1452,15 @@
             document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
             document.documentElement.style.setProperty('--text-secondary', '#666666');
             this.innerHTML = '<i class="fas fa-sun"></i>';
+        });
+
+        // ===== LOGOUT =====
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('swimproUser');
+                localStorage.removeItem('swimproToken');
+                window.location.href = 'login.html';
+            }
         });
     </script>
 </body>
