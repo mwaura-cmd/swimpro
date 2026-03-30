@@ -911,6 +911,10 @@
             50% { opacity: 0.5; }
         }
     </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -1353,6 +1357,22 @@
     </div>
 
     <script>
+        // ===== FIREBASE CONFIGURATION =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyAdA1wJhm6k0BwCCF4V9Bv92_2GSkfAkLs",
+            authDomain: "swimpro-5598c.firebaseapp.com",
+            projectId: "swimpro-5598c",
+            storageBucket: "swimpro-5598c.firebasestorage.app",
+            messagingSenderId: "451502395907",
+            appId: "1:451502395907:web:b7a3a6959b103afc7e7434",
+            measurementId: "G-Q6QWBE87B1"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
         // ===== AUTHENTICATION CHECK =====
         function checkAuthentication() {
             const user = localStorage.getItem('swimproUser');
@@ -1370,11 +1390,22 @@
             return userData;
         }
 
-        // Initialize user data on page load
-        window.addEventListener('load', () => {
-            const user = checkAuthentication();
-            if (user) {
-                updateUserProfile(user);
+        // Monitor Firebase auth state
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Get user data from localStorage
+            const localUser = localStorage.getItem('swimproUser');
+            if (localUser) {
+                const userData = JSON.parse(localUser);
+                if (userData.userType !== 'admin') {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                updateUserProfile(userData);
             }
         });
 
@@ -1457,9 +1488,16 @@
         // ===== LOGOUT =====
         document.getElementById('logoutBtn').addEventListener('click', () => {
             if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('swimproUser');
-                localStorage.removeItem('swimproToken');
-                window.location.href = 'login.html';
+                auth.signOut().then(() => {
+                    localStorage.removeItem('swimproUser');
+                    localStorage.removeItem('swimproToken');
+                    window.location.href = 'login.html';
+                }).catch((error) => {
+                    console.error('Logout Error:', error);
+                    localStorage.removeItem('swimproUser');
+                    localStorage.removeItem('swimproToken');
+                    window.location.href = 'login.html';
+                });
             }
         });
     </script>
