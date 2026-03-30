@@ -509,6 +509,9 @@
     </div>
 
     <script>
+        // ===== ADMIN CONFIGURATION =====
+        const ADMIN_EMAIL = 'admin@swimpro.ke'; // Only email allowed for admin login
+
         let selectedUserType = {
             login: 'student',
             signup: 'student'
@@ -558,6 +561,12 @@
         function signInWithGoogle(form) {
             const userType = selectedUserType[form];
             
+            // Admin email validation
+            if (userType === 'admin') {
+                showError(`Admin access restricted to ${ADMIN_EMAIL} only`, 'login');
+                return;
+            }
+            
             // Store user info in localStorage (in production, send to backend)
             const mockGoogleUser = {
                 id: 'google_' + Math.random().toString(36).substr(2, 9),
@@ -581,6 +590,12 @@
 
         function signUpWithGoogle() {
             const userType = selectedUserType.signup;
+            
+            // Prevent admin signup via Google
+            if (userType === 'admin') {
+                showError('Admin account cannot be created via signup. Contact administrator.', 'signup');
+                return;
+            }
             
             const mockGoogleUser = {
                 id: 'google_' + Math.random().toString(36).substr(2, 9),
@@ -616,6 +631,19 @@
             if (!email || !password) {
                 showError('Please fill in all fields', 'login');
                 return;
+            }
+
+            // Admin email validation
+            if (selectedUserType.login === 'admin') {
+                if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+                    showError(`Admin access is restricted to ${ADMIN_EMAIL} only`, 'login');
+                    return;
+                }
+                // In production, verify password against backend
+                if (password !== 'admin123') { // Mock password for demo
+                    showError('Invalid admin credentials. Please try again.', 'login');
+                    return;
+                }
             }
 
             // Mock authentication (in production, send to backend API)
