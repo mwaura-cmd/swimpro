@@ -606,6 +606,11 @@
                 });
 
                 if (loginError) {
+                    // Check if error is due to unconfirmed email
+                    if (loginError.message.includes('Email not confirmed') || loginError.message.includes('email_not_confirmed')) {
+                        showError('Please confirm your email first. Check your inbox for a confirmation link. (You may need to check Spam folder)', 'login');
+                        return;
+                    }
                     showError('Invalid email or password', 'login');
                     console.error('Auth login error:', loginError);
                     return;
@@ -652,6 +657,9 @@
 
                 localStorage.setItem('swimproUser', JSON.stringify(sessionUser));
                 localStorage.setItem('swimproToken', authData.session?.access_token || 'token_' + Math.random().toString(36).substr(2, 20));
+
+                // Clear any pending signup data
+                sessionStorage.removeItem('pendingLogin');
 
                 // Redirect
                 window.location.href = profile.user_type === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
@@ -738,23 +746,20 @@
                     return;
                 }
 
-                // Store session in localStorage
-                const sessionUser = {
-                    id: authData.user.id,
+                // Store signup credentials temporarily for auto-login after email confirmation
+                const tempCreds = {
+                    email: email.toLowerCase(),
+                    password: password,
                     name: name,
-                    email: authData.user.email,
-                    userType: selectedUserType.signup,
-                    loginMethod: 'email',
-                    createdAt: new Date().toISOString()
+                    userType: selectedUserType.signup
                 };
+                sessionStorage.setItem('pendingLogin', JSON.stringify(tempCreds));
 
-                localStorage.setItem('swimproUser', JSON.stringify(sessionUser));
-                localStorage.setItem('swimproToken', authData.session?.access_token || 'token_' + Math.random().toString(36).substr(2, 20));
-
-                showSuccess('Account created successfully! Redirecting...', 'signup');
+                // Show success message and guide to email confirmation
+                showSuccess('Account created! Check your email for a confirmation link. Redirecting to login...', 'signup');
                 setTimeout(() => {
-                    window.location.href = selectedUserType.signup === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
-                }, 1500);
+                    window.location.href = 'login.html';
+                }, 3000);
             } catch (error) {
                 showError('Signup failed: ' + error.message, 'signup');
                 console.error('Signup error:', error);
