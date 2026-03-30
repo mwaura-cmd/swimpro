@@ -7,6 +7,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Password hashing -->
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcryptjs.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -509,6 +513,11 @@
     </div>
 
     <script>
+        // ===== SUPABASE CONFIGURATION =====
+        const SUPABASE_URL = 'https://rvpgoyufmegaqxvlwddi.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // ===== ADMIN CONFIGURATION =====
         const ADMIN_EMAIL = 'denismwaura548@gmail.com'; // Only email allowed for admin login
         const ADMIN_PASSWORD = 'admin123'; // Temporary - will be replaced with real backend
@@ -567,7 +576,7 @@
             showError('Google Sign-Up will be configured with Firebase. Coming soon!', 'signup');
         }
 
-        function loginWithEmail(event) {
+        async function loginWithEmail(event) {
             event.preventDefault();
             hideError('login');
             
@@ -581,36 +590,67 @@
                 return;
             }
 
-            // Admin email validation
-            if (selectedUserType.login === 'admin') {
-                if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-                    showError(`Admin access is restricted to ${ADMIN_EMAIL} only`, 'login');
+            try {
+                // Query Supabase for user by email
+                const { data: users, error: queryError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('email', email.toLowerCase());
+
+                if (queryError) {
+                    showError('Login failed: Database error', 'login');
+                    console.error('Supabase query error:', queryError);
                     return;
                 }
-                if (password !== ADMIN_PASSWORD) {
-                    showError('Invalid admin password', 'login');
+
+                if (!users || users.length === 0) {
+                    showError('Invalid email or password', 'login');
                     return;
                 }
+
+                const user = users[0];
+
+                // Check user type restrictions
+                if (selectedUserType.login === 'admin' && user.user_type !== 'admin') {
+                    showError(`Admin access is restricted to admin accounts only`, 'login');
+                    return;
+                }
+
+                if (selectedUserType.login === 'student' && user.user_type !== 'student') {
+                    showError('Student access is restricted to student accounts only', 'login');
+                    return;
+                }
+
+                // Verify password with bcryptjs
+                const passwordMatch = await bcryptjs.compare(password, user.password_hash);
+
+                if (!passwordMatch) {
+                    showError('Invalid email or password', 'login');
+                    return;
+                }
+
+                // Store user data in localStorage
+                const sessionUser = {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    userType: user.user_type,
+                    loginMethod: 'email',
+                    loginTime: new Date().toISOString()
+                };
+
+                localStorage.setItem('swimproUser', JSON.stringify(sessionUser));
+                localStorage.setItem('swimproToken', 'token_' + Math.random().toString(36).substr(2, 20));
+
+                // Redirect
+                window.location.href = user.user_type === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
+            } catch (error) {
+                showError('Login failed: ' + error.message, 'login');
+                console.error('Login error:', error);
             }
-
-            // Mock authentication with localStorage
-            const user = {
-                id: 'user_' + Math.random().toString(36).substr(2, 9),
-                name: email.split('@')[0],
-                email: email,
-                userType: selectedUserType.login,
-                loginMethod: 'email',
-                loginTime: new Date().toISOString()
-            };
-
-            localStorage.setItem('swimproUser', JSON.stringify(user));
-            localStorage.setItem('swimproToken', 'token_' + Math.random().toString(36).substr(2, 20));
-
-            // Redirect
-            window.location.href = selectedUserType.login === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
         }
 
-        function signupWithEmail(event) {
+        async function signupWithEmail(event) {
             event.preventDefault();
             hideError('signup');
             hideSuccess('signup');
@@ -643,27 +683,110 @@
                 return;
             }
 
-            // Mock account creation with localStorage
-            const user = {
-                id: 'user_' + Math.random().toString(36).substr(2, 9),
-                name: name,
-                email: email,
-                userType: selectedUserType.signup,
-                loginMethod: 'email',
-                createdAt: new Date().toISOString()
-            };
+            try {
+                // Check if email already exists
+                const { data: existingUsers, error: checkError } = await supabase
+                    .from('users')
+                    .select('email')
+                    .eq('email', email.toLowerCase());
 
-            localStorage.setItem('swimproUser', JSON.stringify(user));
-            localStorage.setItem('swimproToken', 'token_' + Math.random().toString(36).substr(2, 20));
+                if (checkError) {
+                    showError('Signup failed: Database error', 'signup');
+                    console.error('Email check error:', checkError);
+                    return;
+                }
 
-            showSuccess('Account created successfully! Redirecting...', 'signup');
-            setTimeout(() => {
-                window.location.href = selectedUserType.signup === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
-            }, 1500);
+                if (existingUsers && existingUsers.length > 0) {
+                    showError('This email is already registered', 'signup');
+                    return;
+                }
+
+                // Hash password with bcryptjs
+                const saltRounds = 10;
+                const passwordHash = await bcryptjs.hash(password, saltRounds);
+
+                // Insert user into Supabase
+                const { data: newUser, error: insertError } = await supabase
+                    .from('users')
+                    .insert([
+                        {
+                            email: email.toLowerCase(),
+                            password_hash: passwordHash,
+                            name: name,
+                            user_type: selectedUserType.signup,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        }
+                    ])
+                    .select();
+
+                if (insertError) {
+                    showError('Signup failed: ' + insertError.message, 'signup');
+                    console.error('Insert error:', insertError);
+                    return;
+                }
+
+                // Store user data in localStorage
+                const user = newUser[0];
+                const sessionUser = {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    userType: user.user_type,
+                    loginMethod: 'email',
+                    createdAt: user.created_at
+                };
+
+                localStorage.setItem('swimproUser', JSON.stringify(sessionUser));
+                localStorage.setItem('swimproToken', 'token_' + Math.random().toString(36).substr(2, 20));
+
+                showSuccess('Account created successfully! Redirecting...', 'signup');
+                setTimeout(() => {
+                    window.location.href = user.user_type === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
+                }, 1500);
+            } catch (error) {
+                showError('Signup failed: ' + error.message, 'signup');
+                console.error('Signup error:', error);
+            }
         }
 
         // Check if user is already logged in
-        window.addEventListener('load', () => {
+        // Initialize admin user if not exists
+        async function initializeAdminUser() {
+            try {
+                const { data: adminUser, error: checkError } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('email', ADMIN_EMAIL.toLowerCase())
+                    .single();
+
+                if (!adminUser && !checkError) {
+                    // Admin doesn't exist, create it
+                    const passwordHash = await bcryptjs.hash(ADMIN_PASSWORD, 10);
+                    await supabase
+                        .from('users')
+                        .insert([
+                            {
+                                email: ADMIN_EMAIL.toLowerCase(),
+                                password_hash: passwordHash,
+                                name: 'Admin',
+                                user_type: 'admin',
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString()
+                            }
+                        ]);
+                    console.log('Admin user initialized');
+                }
+            } catch (error) {
+                console.log('Admin initialization check completed or skipped');
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            // Initialize admin user
+            await initializeAdminUser();
+
+            // Check if user is already logged in
             const user = localStorage.getItem('swimproUser');
             if (user) {
                 const userData = JSON.parse(user);
