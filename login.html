@@ -516,7 +516,7 @@
         // ===== SUPABASE CONFIGURATION =====
         const SUPABASE_URL = 'https://rvpgoyufmegaqxvlwddi.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabase = null;
 
         // ===== ADMIN CONFIGURATION =====
         const ADMIN_EMAIL = 'denismwaura548@gmail.com'; // Only email allowed for admin login
@@ -580,6 +580,11 @@
             event.preventDefault();
             hideError('login');
             
+            if (!supabase) {
+                showError('Database connection initializing... please try again', 'login');
+                return;
+            }
+
             const form = event.target;
             const email = form.querySelector('input[type="email"]').value;
             const password = form.querySelector('input[type="password"]').value;
@@ -655,6 +660,11 @@
             hideError('signup');
             hideSuccess('signup');
             
+            if (!supabase) {
+                showError('Database connection initializing... please try again', 'signup');
+                return;
+            }
+
             const form = event.target;
             const name = form.querySelector('input[type="text"]').value;
             const email = form.querySelectorAll('input[type="email"]')[0].value;
@@ -751,6 +761,48 @@
         }
 
         // Check if user is already logged in
+        // Initialize Supabase client and admin user
+        async function initializeApp() {
+            try {
+                // Initialize Supabase client
+                if (!supabase && window.supabase) {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                }
+
+                if (!supabase) {
+                    console.error('Supabase SDK not loaded');
+                    return;
+                }
+
+                // Create admin user if not exists
+                const { data: adminUser, error: checkError } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('email', ADMIN_EMAIL.toLowerCase())
+                    .single();
+
+                if (!adminUser && !checkError) {
+                    // Admin doesn't exist, create it
+                    const passwordHash = await bcryptjs.hash(ADMIN_PASSWORD, 10);
+                    await supabase
+                        .from('users')
+                        .insert([
+                            {
+                                email: ADMIN_EMAIL.toLowerCase(),
+                                password_hash: passwordHash,
+                                name: 'Admin',
+                                user_type: 'admin',
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString()
+                            }
+                        ]);
+                    console.log('Admin user initialized');
+                }
+            } catch (error) {
+                console.log('App initialization completed or skipped');
+            }
+        }
+
         // Initialize admin user if not exists
         async function initializeAdminUser() {
             try {
@@ -783,8 +835,8 @@
         }
 
         window.addEventListener('load', async () => {
-            // Initialize admin user
-            await initializeAdminUser();
+            // Initialize app and Supabase
+            await initializeApp();
 
             // Check if user is already logged in
             const user = localStorage.getItem('swimproUser');
