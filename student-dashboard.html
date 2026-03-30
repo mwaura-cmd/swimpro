@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwimPro - Student Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-bg: #0f1419;
+            --darker-bg: #0a0f14;
+            --card-bg: #1a232f;
+            --border-color: #2a3f5f;
+            --text-primary: #e1e8f0;
+            --text-secondary: #a0afc0;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            
+            --sidebar-width: 240px;
+            --sidebar-collapsed: 80px;
+            --header-height: 60px;
+            --right-panel-width: 320px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--darker-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+            transition: width 0.3s ease;
+            position: relative;
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed);
+        }
+
+        .sidebar-header {
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            justify-content: center;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .sidebar-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .sidebar-title {
+            display: none;
+        }
+
+        .sidebar-toggle {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .sidebar-toggle:hover {
+            color: var(--accent-blue);
+        }
+
+        .sidebar.collapsed .sidebar-toggle {
+            display: none;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 8px;
+            overflow-y: auto;
+            list-style: none;
+        }
+
+        .sidebar-nav-item {
+            padding: 0;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .sidebar-nav-link:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+
+        .sidebar-nav-link.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-blue);
+            border-left: 3px solid var(--accent-blue);
+            padding-left: 9px;
+        }
+
+        .sidebar-nav-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-nav-label {
+            flex: 1;
+        }
+
+        .sidebar.collapsed .sidebar-nav-label {
+            display: none;
+        }
+
+        .sidebar-footer {
+            padding: 16px 8px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+        }
+
+        .logout-btn:hover {
+            opacity: 0.9;
+        }
+
+        .sidebar.collapsed .logout-btn span {
+            display: none;
+        }
+
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .sidebar-user:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .sidebar.collapsed .user-avatar {
+            width: 32px;
+            height: 32px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 0.85rem;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-status {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .sidebar.collapsed .user-info {
+            display: none;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .content-header {
+            height: var(--header-height);
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            gap: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        .page-title-section h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .page-title-section p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin: 4px 0 0 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            width: 200px;
+        }
+
+        .search-box input {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            outline: none;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-box i {
+            color: var(--text-secondary);
+        }
+
+        .header-icon-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .header-icon-btn:hover {
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            gap: 0;
+        }
+
+        .content-main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--dark-bg);
+        }
+
+        .sidebar-right {
+            width: var(--right-panel-width);
+            background: var(--card-bg);
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.green {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+        }
+
+        .stat-icon.blue {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+
+        .stat-icon.yellow {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-yellow);
+        }
+
+        .stat-icon.purple {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-purple);
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-change.positive {
+            color: var(--accent-green);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+        }
+
+        .badge.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-yellow);
+        }
+
+        .badge.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+
+        .badge.info {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .card-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .class-card {
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            gap: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .class-card:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .class-time {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .class-time-big {
+            font-size: 1.4rem;
+        }
+
+        .class-time-small {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+
+        .class-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .class-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .class-instructor {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .class-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 12px;
+        }
+
+        .class-action {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .book-btn {
+            padding: 8px 12px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: opacity 0.3s;
+        }
+
+        .book-btn:hover {
+            opacity: 0.9;
+        }
+
+        .book-btn.completed {
+            background: var(--accent-green);
+            cursor: default;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--darker-bg);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .data-table tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-green);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .cert-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .cert-icon {
+            font-size: 2rem;
+            color: var(--accent-yellow);
+        }
+
+        .cert-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .cert-date {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 1200px) {
+            :root {
+                --right-panel-width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                z-index: 1000;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .hamburger-btn {
+                display: block;
+            }
+
+            .sidebar-right {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: hidden;
+                min-height: 120px;
+                padding: 12px 20px;
+            }
+
+            .stat-card {
+                min-width: 160px;
+                padding: 12px;
+            }
+
+            .search-box {
+                display: none;
+            }
+
+            .page-title-section p {
+                display: none;
+            }
+
+            .content-header {
+                height: 50px;
+                padding: 0 15px;
+            }
+
+            .content-main {
+                padding: 15px;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            color: var(--accent-blue);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fas fa-water"></i>
+                </div>
+                <div class="sidebar-title">SwimPro</div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link active" data-section="dashboard">
+                        <i class="fas fa-home"></i>
+                        <span class="sidebar-nav-label">Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="classes">
+                        <i class="fas fa-video"></i>
+                        <span class="sidebar-nav-label">My Classes</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="bookings">
+                        <i class="fas fa-calendar-check"></i>
+                        <span class="sidebar-nav-label">Bookings</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="payments">
+                        <i class="fas fa-credit-card"></i>
+                        <span class="sidebar-nav-label">Payments</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="certificates">
+                        <i class="fas fa-medal"></i>
+                        <span class="sidebar-nav-label">Certificates</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="progress">
+                        <i class="fas fa-chart-line"></i>
+                        <span class="sidebar-nav-label">Progress</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a class="sidebar-nav-link" data-section="profile">
+                        <i class="fas fa-user"></i>
+                        <span class="sidebar-nav-label">Profile</span>
+                    </a>
+                </li>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+                <div class="sidebar-user">
+                    <div class="user-avatar">J</div>
+                    <div class="user-info">
+                        <div class="user-name">John Kipchoge</div>
+                        <div class="user-status">Student</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- HEADER -->
+            <div class="content-header">
+                <div class="header-left">
+                    <button class="hamburger-btn" id="hamburgerBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="page-title-section">
+                        <h1 id="pageTitle">Dashboard</h1>
+                        <p id="pageSubtitle">Welcome back! Ready to swim?</p>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search classes...">
+                    </div>
+                    <button class="header-icon-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button class="header-icon-btn" title="Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <!-- MAIN CONTENT (Scrollable) -->
+                <div class="content-main" id="contentMain">
+                    <!-- DASHBOARD VIEW -->
+                    <div id="dashboard-view" class="view-section">
+                        <!-- Welcome Card -->
+                        <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border: 1px solid rgba(59, 130, 246, 0.2);">
+                            <div class="card-content">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="font-size: 2.5rem;">👋</div>
+                                    <div>
+                                        <h2 style="color: var(--text-primary); margin-bottom: 4px;">Welcome back, John!</h2>
+                                        <p style="color: var(--text-secondary); font-size: 0.9rem;">You have 1 class scheduled for today at 10:00 AM</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Classes -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <i class="fas fa-clock" style="margin-right: 8px; color: var(--accent-blue);"></i>
+                                    Upcoming Classes
+                                </h2>
+                                <div class="card-header-right">
+                                    <span class="badge info">3 Scheduled</span>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <div class="class-card">
+                                    <div class="class-time">
+                                        <div class="class-time-big">10</div>
+                                        <div class="class-time-small">TODAY</div>
+                                    </div>
+                                    <div class="class-info">
+                                        <div class="class-name">Freestyle Basics</div>
+                                        <div class="class-instructor"><i class="fas fa-user-circle"></i> Denis Mwaura</div>
+                                        <div class="class-meta">
+                                            <span><i class="fas fa-clock"></i> 10:00 AM - 11:00 AM</span>
+                                            <span><i class="fas fa-users"></i> 5/8 students</span>
+                                        </div>
+                                    </div>
+                                    <div class="class-action">
+                                        <button class="book-btn">Join Now</button>
+                                    </div>
+                                </div>
+
+                                <div class="class-card">
+                                    <div class="class-time">
+                                        <div class="class-time-big">14</div>
+                                        <div class="class-time-small">TOMORROW</div>
+                                    </div>
+                                    <div class="class-info">
+                                        <div class="class-name">Backstroke Advanced</div>
+                                        <div class="class-instructor"><i class="fas fa-user-circle"></i> Kennedy Munyua</div>
+                                        <div class="class-meta">
+                                            <span><i class="fas fa-clock"></i> 2:00 PM - 3:00 PM</span>
+                                            <span><i class="fas fa-users"></i> 6/6 students</span>
+                                        </div>
+                                    </div>
+                                    <div class="class-action">
+                                        <button class="book-btn">Book</button>
+                                    </div>
+                                </div>
+
+                                <div class="class-card">
+                                    <div class="class-time">
+                                        <div class="class-time-big">16</div>
+                                        <div class="class-time-small">THU</div>
+                                    </div>
+                                    <div class="class-info">
+                                        <div class="class-name">Breaststroke Relaxation</div>
+                                        <div class="class-instructor"><i class="fas fa-user-circle"></i> Denis Mwaura</div>
+                                        <div class="class-meta">
+                                            <span><i class="fas fa-clock"></i> 4:00 PM - 5:00 PM</span>
+                                            <span><i class="fas fa-users"></i> 3/8 students</span>
+                                        </div>
+                                    </div>
+                                    <div class="class-action">
+                                        <button class="book-btn">Book</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <i class="fas fa-history" style="margin-right: 8px; color: var(--accent-green);"></i>
+                                    Recent Activity
+                                </h2>
+                            </div>
+                            <div class="card-content" style="padding: 0;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Class</th>
+                                            <th>Status</th>
+                                            <th>Instructor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Mar 28, 2026</td>
+                                            <td>Freestyle Basics</td>
+                                            <td><span class="badge success"><i class="fas fa-check"></i> Completed</span></td>
+                                            <td>Denis Mwaura</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Mar 26, 2026</td>
+                                            <td>Backstroke Advanced</td>
+                                            <td><span class="badge success"><i class="fas fa-check"></i> Completed</span></td>
+                                            <td>Kennedy Munyua</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Mar 24, 2026</td>
+                                            <td>Breaststroke Relaxation</td>
+                                            <td><span class="badge success"><i class="fas fa-check"></i> Completed</span></td>
+                                            <td>Denis Mwaura</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OTHER VIEWS -->
+                    <div id="classes-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">All Available Classes</h2>
+                            </div>
+                            <div class="card-content">
+                                <p style="color: var(--text-secondary);">Browse and book from our complete class schedule</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="bookings-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">My Bookings</h2>
+                            </div>
+                            <div class="card-content">
+                                <p style="color: var(--text-secondary);">View all your bookings and manage them here</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="payments-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Payment History</h2>
+                            </div>
+                            <div class="card-content" style="padding: 0;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Mar 30, 2026</td>
+                                            <td>Monthly Premium - March</td>
+                                            <td>KSh 4,000</td>
+                                            <td><span class="badge success"><i class="fas fa-check"></i> Paid</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Feb 28, 2026</td>
+                                            <td>Monthly Premium - February</td>
+                                            <td>KSh 4,000</td>
+                                            <td><span class="badge success"><i class="fas fa-check"></i> Paid</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Jan 30, 2026</td>
+                                            <td>Monthly Premium - January</td>
+                                            <td>KSh 4,000</td>
+                                            <td><span class="badge success"><i class="fas fa-check"></i> Paid</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="certificates-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Achievements & Certificates</h2>
+                            </div>
+                            <div class="card-content">
+                                <div class="grid">
+                                    <div class="cert-badge">
+                                        <div class="cert-icon">🏅</div>
+                                        <div class="cert-name">Freestyle Master</div>
+                                        <div class="cert-date">Earned Mar 15, 2026</div>
+                                    </div>
+                                    <div class="cert-badge">
+                                        <div class="cert-icon">🎖️</div>
+                                        <div class="cert-name">10 Classes Complete</div>
+                                        <div class="cert-date">Earned Mar 20, 2026</div>
+                                    </div>
+                                    <div class="cert-badge">
+                                        <div class="cert-icon">⭐</div>
+                                        <div class="cert-name">Dedicated Swimmer</div>
+                                        <div class="cert-date">Earned Mar 25, 2026</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="progress-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Your Progress</h2>
+                            </div>
+                            <div class="card-content">
+                                <div style="margin-bottom: 20px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="color: var(--text-primary); font-weight: 600;">Freestyle</span>
+                                        <span style="color: var(--text-secondary);">75%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 75%;"></div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 20px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="color: var(--text-primary); font-weight: 600;">Backstroke</span>
+                                        <span style="color: var(--text-secondary);">60%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 60%;"></div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 20px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="color: var(--text-primary); font-weight: 600;">Breaststroke</span>
+                                        <span style="color: var(--text-secondary);">45%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 45%;"></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="color: var(--text-primary); font-weight: 600;">Butterfly</span>
+                                        <span style="color: var(--text-secondary);">20%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 20%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="profile-view" class="view-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Profile Settings</h2>
+                            </div>
+                            <div class="card-content">
+                                <p style="color: var(--text-secondary);">Manage your profile information and preferences</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT STATS PANEL -->
+                <div class="sidebar-right" id="sidebarRight">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon green">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="stat-label">Classes Attended</div>
+                                <div class="stat-value">24</div>
+                            </div>
+                        </div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 3 this month
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon blue">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="stat-label">Upcoming Classes</div>
+                                <div class="stat-value">3</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            <i class="fas fa-info-circle"></i> Next in 2 hours
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon yellow">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="stat-label">Current Streak</div>
+                                <div class="stat-value">7 Days</div>
+                            </div>
+                        </div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-check-circle"></i> Keep it up!
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon purple">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="stat-label">Certificates</div>
+                                <div class="stat-value">3</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            Freestyle, 10 Classes, Dedicated
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-icon green">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="stat-label">Membership</div>
+                                <div class="stat-value">Active</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            Premium Monthly • Renews Apr 30
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== SIDEBAR TOGGLE =====
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+
+        hamburgerBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+
+        // ===== NAVIGATION =====
+        const navLinks = document.querySelectorAll('.sidebar-nav-link');
+        const viewSections = document.querySelectorAll('.view-section');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = e.currentTarget.dataset.section;
+
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                viewSections.forEach(v => v.style.display = 'none');
+                document.getElementById(`${section}-view`).style.display = 'block';
+
+                const titles = {
+                    dashboard: 'Dashboard',
+                    classes: 'All Classes',
+                    bookings: 'My Bookings',
+                    payments: 'Payment History',
+                    certificates: 'Achievements & Certificates',
+                    progress: 'Your Progress',
+                    profile: 'Profile Settings'
+                };
+                document.getElementById('pageTitle').textContent = titles[section];
+
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        });
+
+        // ===== THEME TOGGLE =====
+        document.querySelector('[title="Theme"]').addEventListener('click', function() {
+            document.documentElement.style.setProperty('--dark-bg', '#ffffff');
+            document.documentElement.style.setProperty('--darker-bg', '#f5f5f5');
+            document.documentElement.style.setProperty('--card-bg', '#ffffff');
+            document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
+            document.documentElement.style.setProperty('--text-secondary', '#666666');
+            this.innerHTML = '<i class="fas fa-sun"></i>';
+        });
+
+        // ===== CLASS ACTIONS =====
+        document.querySelectorAll('.book-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (!this.classList.contains('completed')) {
+                    alert('Class booked successfully!');
+                }
+            });
+        });
+
+        // ===== LOGOUT =====
+        document.querySelector('.logout-btn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                alert('Logged out successfully!');
+                // window.location.href = '/';
+            }
+        });
+    </script>
+</body>
+</html>
