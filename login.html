@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +6,6 @@
     <title>SwimPro - Login & Sign Up</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -412,7 +411,7 @@
 
                     <div class="form-group">
                         <label class="form-label">Password</label>
-                        <input type="password" placeholder="••••••••" required class="form-input">
+                        <input type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required class="form-input">
                     </div>
 
                     <button type="submit" class="submit-btn">
@@ -482,12 +481,12 @@
 
                     <div class="form-group">
                         <label class="form-label">Password</label>
-                        <input type="password" placeholder="••••••••" required class="form-input">
+                        <input type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required class="form-input">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Confirm Password</label>
-                        <input type="password" placeholder="••••••••" required class="form-input">
+                        <input type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required class="form-input">
                     </div>
 
                     <div class="checkbox-group">
@@ -515,9 +514,55 @@
         const SUPABASE_URL = 'https://rvpgoyufmegaqxvlwddi.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
         
-        // Supabase client will be initialized after SDK loads
+        // Use a singleton client to avoid multiple GoTrue client instances.
+        let swimproSupabaseClient = null;
         function getSupabase() {
-            return window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+            if (!swimproSupabaseClient && window.supabase) {
+                swimproSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+            return swimproSupabaseClient;
+        }
+
+        async function ensureProfile(supabaseClient, user, preferredType = 'student') {
+            const { data: existingProfile, error: existingError } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (existingError) {
+                throw new Error('Could not fetch user profile');
+            }
+
+            if (existingProfile) {
+                return existingProfile;
+            }
+
+            const email = (user.email || '').toLowerCase();
+            const isAdminEmail = email === ADMIN_EMAIL.toLowerCase();
+            const userType = isAdminEmail ? 'admin' : preferredType;
+            const name = user.user_metadata?.name || email.split('@')[0] || 'SwimPro User';
+
+            const { data: newProfile, error: insertError } = await supabaseClient
+                .from('profiles')
+                .insert([
+                    {
+                        id: user.id,
+                        email,
+                        name,
+                        user_type: userType,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }
+                ])
+                .select('*')
+                .single();
+
+            if (insertError) {
+                throw new Error('Could not create user profile');
+            }
+
+            return newProfile;
         }
 
         // ===== ADMIN CONFIGURATION =====
@@ -571,11 +616,11 @@
         }
 
         function signInWithGoogle(form) {
-            showError('Google Sign-In will be configured with Firebase. Coming soon!', form);
+            showError('Google Sign-In is not enabled yet. Use email and password for now.', form);
         }
 
         function signUpWithGoogle() {
-            showError('Google Sign-Up will be configured with Firebase. Coming soon!', 'signup');
+            showError('Google Sign-Up is not enabled yet. Use email and password for now.', 'signup');
         }
 
         async function loginWithEmail(event) {
@@ -621,18 +666,7 @@
                     return;
                 }
 
-                // Fetch user profile to get user_type and name
-                const { data: profile, error: profileError } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', authData.user.id)
-                    .single();
-
-                if (profileError || !profile) {
-                    showError('Profile not found', 'login');
-                    console.error('Profile error:', profileError);
-                    return;
-                }
+                const profile = await ensureProfile(supabaseClient, authData.user, selectedUserType.login);
 
                 // Check user type restrictions
                 if (selectedUserType.login === 'admin' && profile.user_type !== 'admin') {
@@ -657,9 +691,6 @@
 
                 localStorage.setItem('swimproUser', JSON.stringify(sessionUser));
                 localStorage.setItem('swimproToken', authData.session?.access_token || 'token_' + Math.random().toString(36).substr(2, 20));
-
-                // Clear any pending signup data
-                sessionStorage.removeItem('pendingLogin');
 
                 // Redirect
                 window.location.href = profile.user_type === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
@@ -709,13 +740,35 @@
             }
 
             try {
+                if (selectedUserType.signup === 'admin' && email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+                    showError(`Admin signup is restricted to ${ADMIN_EMAIL}`, 'signup');
+                    return;
+                }
+
                 // Sign up with Supabase Auth
                 const { data: authData, error: signupError } = await supabaseClient.auth.signUp({
                     email: email.toLowerCase(),
-                    password: password
+                    password: password,
+                    options: {
+                        data: {
+                            name: name,
+                            user_type: selectedUserType.signup
+                        }
+                    }
                 });
 
                 if (signupError) {
+                    const msg = (signupError.message || '').toLowerCase();
+                    if (msg.includes('rate limit')) {
+                        showError('Too many signup attempts. Wait a minute, then try again or use Login if this account already exists.', 'signup');
+                        return;
+                    }
+
+                    if (msg.includes('already') || msg.includes('registered')) {
+                        showError('This email is already registered. Use Login instead.', 'signup');
+                        return;
+                    }
+
                     showError('Signup failed: ' + signupError.message, 'signup');
                     console.error('Auth signup error:', signupError);
                     return;
@@ -726,112 +779,43 @@
                     return;
                 }
 
-                // Create profile entry
-                const { error: profileError } = await supabaseClient
-                    .from('profiles')
-                    .insert([
-                        {
-                            id: authData.user.id,
-                            email: email.toLowerCase(),
-                            name: name,
-                            user_type: selectedUserType.signup,
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString()
-                        }
-                    ]);
+                // If a session exists (email confirmation disabled), complete profile and redirect immediately.
+                if (authData.session) {
+                    const profile = await ensureProfile(supabaseClient, authData.user, selectedUserType.signup);
 
-                if (profileError) {
-                    showError('Profile creation failed: ' + profileError.message, 'signup');
-                    console.error('Profile error:', profileError);
+                    const sessionUser = {
+                        id: authData.user.id,
+                        name: profile.name,
+                        email: authData.user.email,
+                        userType: profile.user_type,
+                        loginMethod: 'email',
+                        loginTime: new Date().toISOString()
+                    };
+
+                    localStorage.setItem('swimproUser', JSON.stringify(sessionUser));
+                    localStorage.setItem('swimproToken', authData.session.access_token);
+                    window.location.href = profile.user_type === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
                     return;
                 }
 
-                // Store signup credentials temporarily for auto-login after email confirmation
-                const tempCreds = {
-                    email: email.toLowerCase(),
-                    password: password,
-                    name: name,
-                    userType: selectedUserType.signup
-                };
-                sessionStorage.setItem('pendingLogin', JSON.stringify(tempCreds));
-
-                // Show success message and guide to email confirmation
-                showSuccess('Account created! Check your email for a confirmation link. Redirecting to login...', 'signup');
+                // Otherwise, user must confirm email first.
+                showSuccess('Account created. Check your email for the confirmation link, then log in.', 'signup');
+                const loginEmailInput = document.querySelector('#emailLoginForm input[type="email"]');
+                if (loginEmailInput) {
+                    loginEmailInput.value = email.toLowerCase();
+                }
                 setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 3000);
+                    switchToLogin();
+                }, 1200);
             } catch (error) {
                 showError('Signup failed: ' + error.message, 'signup');
                 console.error('Signup error:', error);
             }
         }
 
-        // Initialize app and create admin user if needed
-        async function initializeApp() {
-            try {
-                const supabaseClient = getSupabase();
-                
-                if (!supabaseClient) {
-                    console.log('Supabase SDK not yet loaded');
-                    return;
-                }
-
-                // Check if admin user already exists
-                const { data: adminProfile, error: checkError } = await supabaseClient
-                    .from('profiles')
-                    .select('id')
-                    .eq('email', ADMIN_EMAIL.toLowerCase())
-                    .eq('user_type', 'admin')
-                    .single();
-
-                if (adminProfile) {
-                    console.log('Admin user already exists');
-                    return;
-                }
-
-                // Admin doesn't exist, create it
-                const { data: authData, error: signupError } = await supabaseClient.auth.signUp({
-                    email: ADMIN_EMAIL.toLowerCase(),
-                    password: ADMIN_PASSWORD
-                });
-
-                if (signupError) {
-                    console.log('Could not create admin user:', signupError.message);
-                    return;
-                }
-
-                if (!authData.user) {
-                    console.log('Admin signup failed: No user created');
-                    return;
-                }
-
-                // Create admin profile
-                const { error: profileError } = await supabaseClient
-                    .from('profiles')
-                    .insert([
-                        {
-                            id: authData.user.id,
-                            email: ADMIN_EMAIL.toLowerCase(),
-                            name: 'Admin',
-                            user_type: 'admin',
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString()
-                        }
-                    ]);
-
-                if (profileError) {
-                    console.log('Could not create admin profile:', profileError.message);
-                } else {
-                    console.log('Admin user created successfully');
-                }
-            } catch (error) {
-                console.log('Admin initialization completed or skipped');
-            }
-        }
-
-        window.addEventListener('load', async () => {
-            // Initialize app and Supabase
-            await initializeApp();
+        window.addEventListener('load', () => {
+            // Initialize singleton client.
+            getSupabase();
 
             // Check if user is already logged in
             const user = localStorage.getItem('swimproUser');
@@ -847,5 +831,3 @@
     </script>
 </body>
 </html>
-< ! - -   F i r e b a s e :   A c t i v e   a s   o f   0 3 / 3 0 / 2 0 2 6   0 5 : 2 0 : 1 9   - - > 
- 
