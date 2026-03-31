@@ -1035,7 +1035,9 @@
                                 <h2 class="card-title">All Available Classes</h2>
                             </div>
                             <div class="card-content">
-                                <p style="color: var(--text-secondary);">Browse and book from our complete class schedule</p>
+                                <div id="classes-container" class="grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                                    <p style="color: var(--text-secondary); grid-column: 1/-1;">Loading classes...</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1046,7 +1048,9 @@
                                 <h2 class="card-title">My Bookings</h2>
                             </div>
                             <div class="card-content">
-                                <p style="color: var(--text-secondary);">View all your bookings and manage them here</p>
+                                <div id="bookings-container" style="display: flex; flex-direction: column; gap: 12px;">
+                                    <p style="color: var(--text-secondary);">Loading bookings...</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1109,7 +1113,7 @@
                                         <div class="cert-date">Earned Mar 20, 2026</div>
                                     </div>
                                     <div class="cert-badge">
-                                        <div class="cert-icon">⭐</div>
+                                        <div class="cert-icon"><i class="fas fa-star"></i></div>
                                         <div class="cert-name">Dedicated Swimmer</div>
                                         <div class="cert-date">Earned Mar 25, 2026</div>
                                     </div>
@@ -1175,6 +1179,43 @@
                             <div class="card-content">
                                 <p style="color: var(--text-secondary);">Manage your profile information and preferences</p>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- BOOKING MODAL -->
+                    <div id="bookingModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+                        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h2 style="color: var(--text-primary); font-size: 1.5rem;">Book a Class</h2>
+                                <button onclick="closeBookingModal()" style="background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">×</button>
+                            </div>
+                            <form id="bookingForm" style="display: flex; flex-direction: column; gap: 15px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Class Name</label>
+                                    <input type="text" id="bookingClassName" readonly style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Class Date</label>
+                                    <input type="date" id="bookingClassDate" required style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Student Name</label>
+                                    <input type="text" id="bookingStudentName" required style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Email</label>
+                                    <input type="email" id="bookingStudentEmail" required style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Phone (Optional)</label>
+                                    <input type="tel" id="bookingStudentPhone" style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Message (Optional)</label>
+                                    <textarea id="bookingMessage" rows="3" style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit; resize: vertical;"></textarea>
+                                </div>
+                                <button type="submit" style="padding: 12px 20px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem;">Confirm Booking</button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -1261,6 +1302,14 @@
     </div>
 
     <script>
+        // ===== SUPABASE CONFIG =====
+        const SUPABASE_URL = 'https://rvpgoyufmegaqxvlwddi.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
+
+        function getSupabaseClient() {
+            return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
         // ===== AUTHENTICATION CHECK =====
         function checkAuthentication() {
             const user = localStorage.getItem('swimproUser');
@@ -1278,11 +1327,15 @@
             return userData;
         }
 
+        let currentUser = null;
+
         // Initialize user data on page load
-        window.addEventListener('load', () => {
-            const user = checkAuthentication();
-            if (user) {
-                updateUserProfile(user);
+        window.addEventListener('load', async () => {
+            currentUser = checkAuthentication();
+            if (currentUser) {
+                updateUserProfile(currentUser);
+                loadClasses();
+                loadBookings();
             }
         });
 
@@ -1294,6 +1347,160 @@
             document.getElementById('userAvatar').textContent = firstLetter;
             document.getElementById('pageSubtitle').textContent = `Welcome back, ${userName}! Ready to swim?`;
         }
+
+        // ===== CLASSES & BOOKINGS =====
+        async function loadClasses() {
+            try {
+                const supabase = getSupabaseClient();
+                const { data, error } = await supabase.from('classes').select('*');
+                
+                if (error) {
+                    console.error('Error loading classes:', error);
+                    document.getElementById('classes-container').innerHTML = '<p style="color: var(--text-secondary);">Failed to load classes</p>';
+                    return;
+                }
+
+                const classes = data || [];
+                if (classes.length === 0) {
+                    document.getElementById('classes-container').innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1;">No classes available yet</p>';
+                    return;
+                }
+
+                const html = classes.map(cls => `
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                        <h3 style="color: var(--accent-blue); font-size: 1.1rem; margin: 0;">${cls.name || 'Untitled'}</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">${cls.description || 'No description'}</p>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                            <span style="color: var(--text-secondary);"><i class="fas fa-graduation-cap"></i> ${cls.stroke || 'Swimming'}</span>
+                            <span style="color: var(--accent-green); font-weight: 600;">${cls.level || 'All Levels'}</span>
+                        </div>
+                        <button onclick="openBookingModal('${cls.id}', '${cls.name || 'Class'}')" style="padding: 10px 16px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">Book Class</button>
+                    </div>
+                `).join('');
+                
+                document.getElementById('classes-container').innerHTML = html;
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('classes-container').innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1;">Error loading classes</p>';
+            }
+        }
+
+        async function loadBookings() {
+            try {
+                const token = localStorage.getItem('swimproToken');
+                if (!token) {
+                    document.getElementById('bookings-container').innerHTML = '<p style="color: var(--text-secondary);">Please login to view bookings</p>';
+                    return;
+                }
+
+                const response = await fetch('/api/bookings/my', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const bookings = await response.json();
+                if (!Array.isArray(bookings) || bookings.length === 0) {
+                    document.getElementById('bookings-container').innerHTML = '<p style="color: var(--text-secondary);">No bookings yet. Book a class to get started!</p>';
+                    return;
+                }
+
+                const html = bookings.map(booking => `
+                    <div style="background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="color: var(--text-primary); margin: 0 0 6px 0; font-size: 1rem;">${booking.name || 'Booking'}</h4>
+                            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem;">
+                                <i class="fas fa-calendar"></i> ${booking.date || 'No date'} | 
+                                <i class="fas fa-tag"></i> ${booking.category || 'N/A'}
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="display: inline-block; padding: 6px 12px; background: ${booking.status === 'confirmed' ? 'var(--accent-green)' : booking.status === 'declined' ? 'var(--accent-red)' : 'var(--accent-yellow)'}; color: white; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">${booking.status || 'pending'}</span>
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('bookings-container').innerHTML = html;
+            } catch (err) {
+                console.error('Error loading bookings:', err);
+                document.getElementById('bookings-container').innerHTML = '<p style="color: var(--accent-red);">Error loading bookings</p>';
+            }
+        }
+
+        function openBookingModal(classId, className) {
+            document.getElementById('bookingClassName').value = className;
+            document.getElementById('bookingClassDate').value = '';
+            document.getElementById('bookingStudentName').value = currentUser?.name || '';
+            document.getElementById('bookingStudentEmail').value = currentUser?.email || '';
+            document.getElementById('bookingStudentPhone').value = '';
+            document.getElementById('bookingMessage').value = '';
+            
+            // Store classId in a data attribute
+            document.getElementById('bookingForm').dataset.classId = classId;
+            document.getElementById('bookingModal').style.display = 'flex';
+        }
+
+        function closeBookingModal() {
+            document.getElementById('bookingModal').style.display = 'none';
+        }
+
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const token = localStorage.getItem('swimproToken');
+                if (!token) {
+                    alert('Please login to book a class');
+                    return;
+                }
+
+                const classId = e.target.dataset.classId;
+                const bookingData = {
+                    class_id: classId,
+                    name: document.getElementById('bookingClassName').value,
+                    date: document.getElementById('bookingClassDate').value,
+                    email: document.getElementById('bookingStudentEmail').value,
+                    phone: document.getElementById('bookingStudentPhone').value,
+                    category: document.getElementById('bookingClassName').value,
+                    stroke: 'General',
+                    message: document.getElementById('bookingMessage').value,
+                    paid: false,
+                    status: 'pending'
+                };
+
+                const response = await fetch('/api/bookings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Booking failed');
+                }
+
+                const result = await response.json();
+                alert('Booking created successfully! Status: ' + (result.status || 'pending'));
+                closeBookingModal();
+                loadBookings();
+                loadClasses();
+            } catch (err) {
+                console.error('Booking error:', err);
+                alert('Error creating booking: ' + err.message);
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('bookingModal').addEventListener('click', (e) => {
+            if (e.target.id === 'bookingModal') {
+                closeBookingModal();
+            }
+        });
 
         // ===== SIDEBAR TOGGLE =====
         const sidebar = document.getElementById('sidebar');
@@ -1342,6 +1549,10 @@
                 };
                 document.getElementById('pageTitle').textContent = titles[section];
 
+                // Refresh data when viewing bookings or classes
+                if (section === 'bookings') loadBookings();
+                if (section === 'classes') loadClasses();
+
                 if (window.innerWidth <= 768) {
                     sidebar.classList.remove('open');
                 }
@@ -1358,15 +1569,6 @@
             this.innerHTML = '<i class="fas fa-sun"></i>';
         });
 
-        // ===== CLASS ACTIONS =====
-        document.querySelectorAll('.book-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                if (!this.classList.contains('completed')) {
-                    alert('Class booked successfully!');
-                }
-            });
-        });
-
         // ===== LOGOUT =====
         document.getElementById('logoutBtn').addEventListener('click', () => {
             if (confirm('Are you sure you want to logout?')) {
@@ -1376,5 +1578,8 @@
             }
         });
     </script>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </body>
 </html>
