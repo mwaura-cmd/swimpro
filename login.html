@@ -562,42 +562,71 @@
             document.getElementById(`${form}Success`).classList.remove('show');
         }
 
-        // Signup cooldown to prevent rapid retries (mitigates email rate limit errors)
+        // ===== SIGNUP COOLDOWN MANAGEMENT =====
+        // Global interval tracker to prevent multiple simultaneous intervals
+        let signupCooldownInterval = null;
+
         function startSignupCooldown(seconds) {
             const form = document.getElementById('emailSignupForm');
             if (!form) return;
+            
             const btn = form.querySelector('button[type="submit"]');
             if (!btn) return;
+            
+            // Clear any existing interval first
+            if (signupCooldownInterval !== null) {
+                clearInterval(signupCooldownInterval);
+                signupCooldownInterval = null;
+            }
+            
+            // Store original button text
             const orig = btn.dataset.origText || btn.textContent;
             btn.dataset.origText = orig;
             btn.disabled = true;
+            
+            // Calculate end time
             let remaining = Math.max(1, Math.floor(seconds));
             btn.textContent = `Try again (${remaining}s)`;
             const endAt = Date.now() + remaining * 1000;
+            
+            // Store in sessionStorage
             sessionStorage.setItem('signupCooldownUntil', String(endAt));
-
-            const iv = setInterval(() => {
+            
+            // Create new interval
+            signupCooldownInterval = setInterval(() => {
                 const now = Date.now();
                 const rem = Math.ceil((endAt - now) / 1000);
+                
                 if (rem <= 0) {
-                    clearInterval(iv);
+                    // Timer expired - cleanup
+                    clearInterval(signupCooldownInterval);
+                    signupCooldownInterval = null;
                     btn.disabled = false;
                     btn.textContent = btn.dataset.origText || orig;
                     sessionStorage.removeItem('signupCooldownUntil');
                     return;
                 }
+                
+                // Update button text
                 btn.textContent = `Try again (${rem}s)`;
-            }, 1000);
+            }, 500); // Update every 500ms for smoother countdown
         }
 
         function restoreSignupCooldownIfAny() {
             const until = sessionStorage.getItem('signupCooldownUntil');
             if (!until) return;
+            
             const endAt = Number(until);
             const now = Date.now();
             const rem = Math.ceil((endAt - now) / 1000);
-            if (rem > 0) startSignupCooldown(rem);
-            else sessionStorage.removeItem('signupCooldownUntil');
+            
+            if (rem > 0) {
+                // Cooldown still valid, restore it
+                startSignupCooldown(rem);
+            } else {
+                // Cooldown expired, clean up
+                sessionStorage.removeItem('signupCooldownUntil');
+            }
         }
 
         // Google OAuth sign-in removed (disabled UI and flow per request)
@@ -723,9 +752,6 @@
                     showError(`Admin signup is restricted to ${ADMIN_EMAIL}`, 'signup');
                     return;
                 }
-                // Start a short cooldown to prevent immediate retries
-                startSignupCooldown(30);
-
                 // Sign up with Supabase Auth
                 const { data: authData, error: signupError } = await supabaseClient.auth.signUp({
                     email: email.toLowerCase(),
@@ -742,18 +768,22 @@
                     const msg = (signupError.message || '').toLowerCase();
                     if (msg.includes('rate limit')) {
                         showError('Too many signup attempts. Wait a minute, then try again or use Login if this account already exists.', 'signup');
-                        // apply longer cooldown on rate limit
+                        // Apply 60s cooldown on rate limit
                         startSignupCooldown(60);
                         return;
                     }
 
                     if (msg.includes('already') || msg.includes('registered')) {
                         showError('This email is already registered. Use Login instead.', 'signup');
+                        // Apply 30s cooldown on any failure to prevent spam
+                        startSignupCooldown(30);
                         return;
                     }
 
                     showError('Signup failed: ' + signupError.message, 'signup');
                     console.error('Auth signup error:', signupError);
+                    // Apply 30s cooldown on any failure to prevent spam
+                    startSignupCooldown(30);
                     return;
                 }
 
