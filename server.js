@@ -346,33 +346,88 @@ app.get('/api/paystack/verify/:reference', async (req, res) => {
 });
 
 // Paystack webhook handler (for server-to-server event notifications)
-app.post('/api/paystack/webhook', (req, res) => {
+app.post('/api/paystack/webhook', async (req, res) => {
   try {
-    // Validate signature
+    // Validate signature (reject if secret not configured)
+    if (!PAYSTACK_SECRET_KEY) {
+      console.warn('[Webhook] PAYSTACK_SECRET_KEY not set');
+      return res.status(503).send('Webhook not configured');
+    }
+
+    const rawBody = JSON.stringify(req.body);
+    const signature = req.headers['x-paystack-signature'];
     const hash = crypto.createHmac('sha512', PAYSTACK_SECRET_KEY)
-                       .update(JSON.stringify(req.body))
+                       .update(rawBody)
                        .digest('hex');
-    if (hash !== req.headers['x-paystack-signature']) {
+    if (!signature || hash !== signature) {
+      console.warn('[Webhook] Invalid signature');
       return res.status(401).send('Invalid signature');
     }
+
     const event = req.body;
-    console.log('Paystack webhook event:', event.event);
+    const eventId = event && event.id ? event.id : (event && event.data && (event.data.reference || event.data.id)) || crypto.randomUUID();
+
+    // Idempotency: ensure we don't process the same webhook twice
+    const webhookKey = `webhook:${eventId}`;
+    const seen = await sessionStore.get(webhookKey);
+    if (seen) {
+      console.log('[Webhook] Duplicate event, skipping:', eventId);
+      return res.sendStatus(200);
+    }
+    // mark processed for 7 days
+    await sessionStore.set(webhookKey, { processed: true }, 7 * 24 * 60 * 60 * 1000);
+
+    // Append structured log for audit/debug
+    try {
+      const logLine = `${new Date().toISOString()} ${event.event} ${eventId} ${JSON.stringify(event.data || {})}\n`;
+      fs.appendFileSync(path.join(__dirname, 'webhooks.log'), logLine);
+    } catch (logErr) {
+      console.warn('[Webhook] Failed to write webhooks.log:', logErr.message || logErr);
+    }
+
+    console.log('Paystack webhook event:', event.event, 'id=', eventId);
     if (event.event === 'charge.success') {
-      const reference = event.data.reference;
-      const bookings = readBookings();
-      const idx = bookings.findIndex(b => b.paystackRef === reference);
-      if (idx !== -1) {
-        bookings[idx].paid = true;
-        bookings[idx].status = 'confirmed';
-        bookings[idx].confirmedAt = Date.now();
-        bookings[idx].paystackData = event.data;
-        writeBookings(bookings);
+      const reference = event.data && event.data.reference;
+      if (reference) {
+        const bookings = readBookings();
+        const idx = bookings.findIndex(b => b.paystackRef === reference);
+        if (idx !== -1) {
+          // Avoid double-updating a booking that is already marked paid
+          if (!bookings[idx].paid) {
+            bookings[idx].paid = true;
+            bookings[idx].status = 'confirmed';
+            bookings[idx].confirmedAt = Date.now();
+            bookings[idx].paystackData = event.data;
+            writeBookings(bookings);
+            console.log('[Webhook] Booking updated for reference:', reference, 'bookingId=', bookings[idx].id);
+          } else {
+            console.log('[Webhook] Booking already marked paid for reference:', reference);
+          }
+        } else {
+          console.warn('[Webhook] No local booking matched paystack reference:', reference);
+        }
+      } else {
+        console.warn('[Webhook] charge.success missing reference');
       }
     }
     res.sendStatus(200);
   } catch (e) {
-    console.error('Paystack webhook error', e);
+    console.error('Paystack webhook error', e && (e.message || e));
     res.sendStatus(500);
+  }
+});
+
+// Admin helper: clear webhook idempotency marker (admin only)
+app.post('/api/admin/clear-webhook/:id', requireAdminToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const key = `webhook:${id}`;
+    await sessionStore.del(key);
+    console.log('[Admin] Cleared webhook marker for', id);
+    res.json({ ok: true, cleared: id });
+  } catch (err) {
+    console.error('[Admin] Failed to clear webhook marker', err.message || err);
+    res.status(500).json({ error: 'Failed to clear marker' });
   }
 });
 

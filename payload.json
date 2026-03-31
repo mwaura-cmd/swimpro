@@ -1,0 +1,9 @@
+{
+  "id": "evt_test_001",
+  "event": "charge.success",
+  "data": {
+    "reference": "TEST-PAY-REF-123",
+    "amount": 150000,
+    "status": "success"
+  }
+}
