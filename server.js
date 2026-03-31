@@ -6,10 +6,36 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const nodemailer = require('nodemailer');
+const { createClient } = require('@supabase/supabase-js');
 
 const crypto = require('crypto');
 
 const app = express();
+
+// ------------ Supabase config ------------
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rvpgoyufmegaqxvlwddi.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// JWT verification middleware (verifies Supabase auth token)
+async function verifySupabaseToken(req, res, next) {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+        return res.status(401).json({ error: 'Unauthorized: No token' });
+    }
+    try {
+        const { data, error } = await supabase.auth.getUser(token);
+        if (error || !data.user) {
+            return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+        }
+        req.user = data.user;
+        next();
+    } catch (err) {
+        return res.status(401).json({ error: 'Unauthorized: Token verification failed' });
+    }
+}
 
 // ------------ Admin auth config ------------
 // Set ADMIN_PASSWORD in your Render environment variables (never hardcode it)
@@ -85,9 +111,9 @@ async function sendBookingEmail(booking) {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('[Email] ✅ Booking notification sent successfully:', info.messageId);
+    console.log('[Email] Booking notification sent successfully:', info.messageId);
   } catch (err) {
-    console.error('[Email] ❌ Failed to send booking notification:', err.message);
+    console.error('[Email] Failed to send booking notification:', err.message);
   }
 }
 
@@ -198,46 +224,97 @@ app.post('/api/paystack/webhook', (req, res) => {
   }
 });
 
-// Create booking (with screenshot upload optional)
-app.post('/api/bookings', upload.single('screenshot'), (req, res) => {
-  const bookings = readBookings();
-  const id = 'bk_' + Date.now();
-  const b = {
-    id,
-    name: req.body.name || '',
-    email: req.body.email || '',
-    phone: req.body.phone || '',
-    category: req.body.category || '',
-    stroke: req.body.stroke || '',
-    date: req.body.date || '',
-    message: req.body.message || '',
-    paid: req.body.paid === 'true' || req.body.paid === true,
-    screenshot: req.file ? `/uploads/${req.file.filename}` : null,
-    status: 'pending',
-    createdAt: Date.now()
-  };
-  bookings.push(b);
-  writeBookings(bookings);
-  sendBookingEmail(b); // fire-and-forget — does not block the response
-  res.json(b);
+// Create booking — Supabase-backed with JWT verification
+app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const b = {
+      user_id: userId,
+      name: req.body.name || '',
+      email: req.body.email || '',
+      phone: req.body.phone || '',
+      category: req.body.category || '',
+      stroke: req.body.stroke || '',
+      date: req.body.date || '',
+      message: req.body.message || '',
+      paid: req.body.paid === 'true' || req.body.paid === true,
+      screenshot: req.file ? `/uploads/${req.file.filename}` : null,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .insert([b])
+      .select();
+
+    if (error) {
+      return res.status(400).json({ error: 'Failed to create booking', details: error.message });
+    }
+
+    // Also store in file-based backup
+    const bookings = readBookings();
+    bookings.push({ ...b, id: data[0].id });
+    writeBookings(bookings);
+
+    // Send email notification (fire-and-forget)
+    sendBookingEmail({ ...b, id: data[0].id });
+
+    res.json(data[0]);
+  } catch (err) {
+    console.error('Booking creation error:', err);
+    res.status(500).json({ error: 'Booking creation failed', details: err.message });
+  }
 });
 
-// List bookings — admin only
-app.get('/api/bookings', requireAdminToken, (req, res) => {
-  const bookings = readBookings();
-  res.json(bookings);
+// List bookings — admin only — Supabase-backed
+app.get('/api/bookings', requireAdminToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return res.status(400).json({ error: 'Failed to fetch bookings', details: error.message });
+    }
+
+    res.json(data || []);
+  } catch (err) {
+    console.error('Fetch bookings error:', err);
+    res.status(500).json({ error: 'Failed to fetch bookings', details: err.message });
+  }
 });
 
-// Confirm booking — admin only
-app.put('/api/bookings/:id/confirm', requireAdminToken, (req, res) => {
-  const bookings = readBookings();
-  const id = req.params.id;
-  const idx = bookings.findIndex(x => x.id === id);
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  bookings[idx].status = 'confirmed';
-  bookings[idx].confirmedAt = Date.now();
-  writeBookings(bookings);
-  res.json(bookings[idx]);
+// Confirm/approve booking — admin only — Supabase-backed
+app.put('/api/bookings/:id/confirm', requireAdminToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+      .eq('id', id)
+      .select();
+
+    if (error || !data || data.length === 0) {
+      return res.status(404).json({ error: 'Booking not found', details: error?.message });
+    }
+
+    // Also update file-based backup
+    const bookings = readBookings();
+    const idx = bookings.findIndex(x => x.id === id);
+    if (idx !== -1) {
+      bookings[idx].status = 'confirmed';
+      bookings[idx].confirmedAt = Date.now();
+      writeBookings(bookings);
+    }
+
+    res.json(data[0]);
+  } catch (err) {
+    console.error('Confirm booking error:', err);
+    res.status(500).json({ error: 'Confirmation failed', details: err.message });
+  }
 });
 
 // Attach Paystack reference to a booking (called before opening the popup)
@@ -249,6 +326,125 @@ app.put('/api/bookings/:id/payref', (req, res) => {
   bookings[idx].paystackRef = req.body.paystackRef || null;
   writeBookings(bookings);
   res.json(bookings[idx]);
+});
+
+// Get user's own bookings — Supabase-backed
+app.get('/api/bookings/my', verifySupabaseToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return res.status(400).json({ error: 'Failed to fetch bookings', details: error.message });
+    }
+
+    res.json(data || []);
+  } catch (err) {
+    console.error('Fetch user bookings error:', err);
+    res.status(500).json({ error: 'Failed to fetch bookings', details: err.message });
+  }
+});
+
+// Approve/Confirm booking (admin) — Supabase-backed (alias for /confirm)
+app.put('/api/bookings/:id/approve', requireAdminToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .update({ status: 'approved', confirmed_at: new Date().toISOString() })
+      .eq('id', id)
+      .select();
+
+    if (error || !data || data.length === 0) {
+      return res.status(404).json({ error: 'Booking not found', details: error?.message });
+    }
+
+    res.json(data[0]);
+  } catch (err) {
+    console.error('Approve booking error:', err);
+    res.status(500).json({ error: 'Approval failed', details: err.message });
+  }
+});
+
+// Decline/Reject booking (admin) — Supabase-backed
+app.put('/api/bookings/:id/decline', requireAdminToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .update({ status: 'declined', declined_at: new Date().toISOString() })
+      .eq('id', id)
+      .select();
+
+    if (error || !data || data.length === 0) {
+      return res.status(404).json({ error: 'Booking not found', details: error?.message });
+    }
+
+    res.json(data[0]);
+  } catch (err) {
+    console.error('Decline booking error:', err);
+    res.status(500).json({ error: 'Decline failed', details: err.message });
+  }
+});
+
+// Delete booking (admin or owner) — Supabase-backed
+app.delete('/api/bookings/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const authToken = req.headers.authorization?.replace('Bearer ', '');
+    const adminToken = req.headers['x-admin-token'] || req.query.adminToken;
+
+    // Verify either JWT token (owner) or admin token
+    let userId = null;
+    if (authToken) {
+      const { data, error } = await supabase.auth.getUser(authToken);
+      if (!error && data.user) {
+        userId = data.user.id;
+      }
+    }
+
+    if (!adminToken && !userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Fetch booking to check ownership
+    const { data: bookingData, error: fetchError } = await supabase
+      .from('bookings')
+      .select('user_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !bookingData) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    // Check if user is owner or admin
+    if (!adminToken && bookingData.user_id !== userId) {
+      return res.status(403).json({ error: 'Forbidden: Not your booking' });
+    }
+
+    // Delete from Supabase
+    const { error: deleteError } = await supabase
+      .from('bookings')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) {
+      return res.status(400).json({ error: 'Failed to delete booking', details: deleteError.message });
+    }
+
+    res.json({ success: true, message: 'Booking deleted' });
+  } catch (err) {
+    console.error('Delete booking error:', err);
+    res.status(500).json({ error: 'Delete failed', details: err.message });
+  }
 });
 
 const PORT = process.env.PORT || 4000;
