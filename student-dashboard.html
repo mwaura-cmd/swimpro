@@ -13,141 +13,7 @@
             box-sizing: border-box;
         }
 
-        async function renderDashboardOverview() {
-            try {
-                if (!currentUser) return;
-                const supabase = getSupabaseClient();
-                const today = new Date().toISOString().split('T')[0];
-
-                // Upcoming bookings (pending or confirmed)
-                const { data: upcoming, error: upErr } = await supabase
-                    .from('bookings')
-                    .select('id, booking_date, suggested_time, status, class_id, classes(name, instructor)')
-                    .eq('user_id', currentUser.id)
-                    .in('status', ['pending','confirmed'])
-                    .gte('booking_date', today)
-                    .order('booking_date', { ascending: true })
-                    .limit(5);
-
-                const upcomingContainer = document.getElementById('upcomingClassesContainer');
-                const upcomingBadge = document.getElementById('upcomingBadge');
-                if (upErr) {
-                    console.error('Error loading upcoming:', upErr);
-                    upcomingContainer.innerHTML = '<p style="color: var(--accent-red);">Failed to load upcoming classes</p>';
-                    upcomingBadge.textContent = '0 Scheduled';
-                } else {
-                    const list = upcoming || [];
-                    upcomingBadge.textContent = `${list.length} Scheduled`;
-                    if (list.length === 0) {
-                        upcomingContainer.innerHTML = '<p style="color: var(--text-secondary);">No upcoming classes. Book a class to get started.</p>';
-                    } else {
-                        upcomingContainer.innerHTML = list.map(b => {
-                            const d = new Date(b.booking_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                            const time = b.suggested_time || 'TBD';
-                            const instructor = b.classes?.instructor || 'Instructor';
-                            const btn = b.status === 'confirmed' ? '<button class="book-btn">Join Now</button>' : '<button class="book-btn">Manage</button>';
-                            return `
-                                <div class="class-card">
-                                    <div class="class-time">
-                                        <div class="class-time-big">${d.split(' ')[1] || d}</div>
-                                        <div class="class-time-small">${d.split(' ')[0] || ''}</div>
-                                    </div>
-                                    <div class="class-info">
-                                        <div class="class-name">${b.classes?.name || 'Class'}</div>
-                                        <div class="class-instructor"><i class="fas fa-user-circle"></i> ${instructor}</div>
-                                        <div class="class-meta">
-                                            <span><i class="fas fa-clock"></i> ${time}</span>
-                                            <span><i class="fas fa-info-circle"></i> ${b.status}</span>
-                                        </div>
-                                    </div>
-                                    <div class="class-action">${btn}</div>
-                                </div>
-                            `;
-                        }).join('');
-                    }
-                }
-
-                // Today's schedule summary for welcome card
-                const { data: todays, error: tdErr } = await supabase
-                    .from('bookings')
-                    .select('booking_date, suggested_time, classes(name)')
-                    .eq('user_id', currentUser.id)
-                    .eq('booking_date', today);
-                if (!tdErr && todays && todays.length > 0) {
-                    const next = todays.sort((a,b) => (a.suggested_time || '') > (b.suggested_time || '') ? 1 : -1)[0];
-                    document.getElementById('welcomeName').textContent = `Welcome back, ${currentUser.name || currentUser.email.split('@')[0]}`;
-                    document.getElementById('welcomeDetail').textContent = `You have ${todays.length} class${todays.length>1? 'es':''} scheduled for today at ${next.suggested_time || 'TBD'}`;
-                } else {
-                    document.getElementById('welcomeName').textContent = `Welcome back, ${currentUser.name || currentUser.email.split('@')[0]}`;
-                    document.getElementById('welcomeDetail').textContent = 'No classes scheduled for today';
-                }
-
-                // Recent activity (last 5 bookings)
-                const { data: recent, error: recErr } = await supabase
-                    .from('bookings')
-                    .select('booking_date, status, classes(name, instructor)')
-                    .eq('user_id', currentUser.id)
-                    .order('booking_date', { ascending: false })
-                    .limit(5);
-                const recentBody = document.getElementById('recentActivityBody');
-                if (recErr) {
-                    console.error('Error recent activity:', recErr);
-                    recentBody.innerHTML = '<tr><td colspan="4" style="color: var(--accent-red);">Failed to load recent activity</td></tr>';
-                } else {
-                    if (!recent || recent.length === 0) {
-                        recentBody.innerHTML = '<tr><td colspan="4" style="color: var(--text-secondary);">No recent activity</td></tr>';
-                    } else {
-                        recentBody.innerHTML = recent.map(r => `
-                            <tr>
-                                <td>${new Date(r.booking_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
-                                <td>${r.classes?.name || 'Class'}</td>
-                                <td>${r.status === 'confirmed' ? '<span class="badge success"><i class="fas fa-check"></i> Confirmed</span>' : r.status === 'pending' ? '<span class="badge warning"><i class="fas fa-clock"></i> Pending</span>' : '<span class="badge danger"><i class="fas fa-times"></i> Cancelled</span>'}</td>
-                                <td>${r.classes?.instructor || '-'}</td>
-                            </tr>
-                        `).join('');
-                    }
-                }
-
-                // Summary stats
-                const { data: attendedData } = await supabase
-                    .from('bookings')
-                    .select('id', { count: 'exact' })
-                    .eq('user_id', currentUser.id)
-                    .eq('status', 'confirmed');
-                const attended = (attendedData && attendedData.length) || 0;
-                document.getElementById('classesAttendedValue').textContent = attended;
-
-                const upcomingCount = (upcoming && upcoming.length) || 0;
-                document.getElementById('upcomingClassesValue').textContent = upcomingCount;
-
-                // Current streak (approx: unique confirmed days in last 7 days)
-                const date7 = new Date(); date7.setDate(date7.getDate() - 6);
-                const fromDate = date7.toISOString().split('T')[0];
-                const { data: last7 } = await supabase
-                    .from('bookings')
-                    .select('booking_date', { count: 'exact' })
-                    .eq('user_id', currentUser.id)
-                    .eq('status', 'confirmed')
-                    .gte('booking_date', fromDate);
-                const streakDays = last7 ? last7.length : 0;
-                document.getElementById('currentStreakValue').textContent = `${streakDays} Days`;
-
-                // Certificates (recompute)
-                const { data: conf } = await supabase
-                    .from('bookings')
-                    .select('id', { count: 'exact' })
-                    .eq('user_id', currentUser.id)
-                    .eq('status', 'confirmed');
-                const certCount = conf ? conf.length >= 10 ? 3 : conf.length >=5 ? 2 : conf.length >=1 ? 1 : 0 : 0;
-                document.getElementById('certificatesValue').textContent = certCount;
-
-                // Membership
-                document.getElementById('membershipValue').textContent = currentUser.membership || 'Active';
-
-            } catch (err) {
-                console.error('renderDashboardOverview error:', err);
-            }
-        }
+        
 
         :root {
             --dark-bg: #0f1419;
@@ -1803,6 +1669,173 @@
             } catch (err) {
                 console.error('Error:', err);
                 document.getElementById('progress-container').innerHTML = '<p style="color: var(--accent-red);">Error loading progress</p>';
+            }
+        }
+
+        // Enhanced dashboard renderer: upcoming classes with attendee counts and subscription-based streak
+        async function renderDashboardOverview() {
+            try {
+                if (!currentUser) return;
+                const supabase = getSupabaseClient();
+                const today = new Date().toISOString().split('T')[0];
+
+                // Fetch upcoming bookings (includes class info and capacity)
+                const { data: upcoming, error: upErr } = await supabase
+                    .from('bookings')
+                    .select('id, booking_date, suggested_time, status, class_id, classes(name, instructor, max_students)')
+                    .eq('user_id', currentUser.id)
+                    .in('status', ['pending','confirmed'])
+                    .gte('booking_date', today)
+                    .order('booking_date', { ascending: true })
+                    .limit(5);
+
+                const upcomingContainer = document.getElementById('upcomingClassesContainer');
+                const upcomingBadge = document.getElementById('upcomingBadge');
+
+                if (upErr) {
+                    console.error('Error loading upcoming:', upErr);
+                    upcomingContainer.innerHTML = '<p style="color: var(--accent-red);">Failed to load upcoming classes</p>';
+                    upcomingBadge.textContent = '0 Scheduled';
+                } else {
+                    const list = upcoming || [];
+                    upcomingBadge.textContent = `${list.length} Scheduled`;
+                    if (list.length === 0) {
+                        upcomingContainer.innerHTML = '<p style="color: var(--text-secondary);">No upcoming classes. Book a class to get started.</p>';
+                    } else {
+                        // Fetch attendee counts in parallel per booking (class_id + booking_date)
+                        const counts = await Promise.all(list.map(async (b) => {
+                            try {
+                                const { data: occ } = await supabase
+                                    .from('bookings')
+                                    .select('id')
+                                    .eq('class_id', b.class_id)
+                                    .eq('booking_date', b.booking_date)
+                                    .in('status', ['pending','confirmed']);
+                                return occ ? occ.length : 0;
+                            } catch (err) {
+                                console.error('attendee count error', err);
+                                return 0;
+                            }
+                        }));
+
+                        upcomingContainer.innerHTML = list.map((b, idx) => {
+                            const d = new Date(b.booking_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            const time = b.suggested_time || 'TBD';
+                            const instructor = b.classes?.instructor || 'Instructor';
+                            const capacity = b.classes?.max_students || 8;
+                            const attendees = counts[idx] || 0;
+                            const occupancy = `${attendees}/${capacity} students`;
+                            const btn = b.status === 'confirmed' ? '<button class="book-btn">Join Now</button>' : '<button class="book-btn">Manage</button>';
+
+                            return `
+                                <div class="class-card">
+                                    <div class="class-time">
+                                        <div class="class-time-big">${d.split(' ')[1] || d}</div>
+                                        <div class="class-time-small">${d.split(' ')[0] || ''}</div>
+                                    </div>
+                                    <div class="class-info">
+                                        <div class="class-name">${b.classes?.name || 'Class'}</div>
+                                        <div class="class-instructor"><i class="fas fa-user-circle"></i> ${instructor}</div>
+                                        <div class="class-meta">
+                                            <span><i class="fas fa-clock"></i> ${time}</span>
+                                            <span><i class="fas fa-users"></i> ${occupancy}</span>
+                                        </div>
+                                    </div>
+                                    <div class="class-action">${btn}</div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // Today's schedule summary for welcome card
+                const { data: todays, error: tdErr } = await supabase
+                    .from('bookings')
+                    .select('booking_date, suggested_time, classes(name)')
+                    .eq('user_id', currentUser.id)
+                    .eq('booking_date', today);
+                if (!tdErr && todays && todays.length > 0) {
+                    const next = todays.sort((a,b) => (a.suggested_time || '') > (b.suggested_time || '') ? 1 : -1)[0];
+                    document.getElementById('welcomeName').textContent = `Welcome back, ${currentUser.name || currentUser.email.split('@')[0]}`;
+                    document.getElementById('welcomeDetail').textContent = `You have ${todays.length} class${todays.length>1? 'es':''} scheduled for today at ${next.suggested_time || 'TBD'}`;
+                } else {
+                    document.getElementById('welcomeName').textContent = `Welcome back, ${currentUser.name || currentUser.email.split('@')[0]}`;
+                    document.getElementById('welcomeDetail').textContent = 'No classes scheduled for today';
+                }
+
+                // Recent activity (last 5 bookings)
+                const { data: recent, error: recErr } = await supabase
+                    .from('bookings')
+                    .select('booking_date, status, classes(name, instructor)')
+                    .eq('user_id', currentUser.id)
+                    .order('booking_date', { ascending: false })
+                    .limit(5);
+                const recentBody = document.getElementById('recentActivityBody');
+                if (recErr) {
+                    console.error('Error recent activity:', recErr);
+                    recentBody.innerHTML = '<tr><td colspan="4" style="color: var(--accent-red);">Failed to load recent activity</td></tr>';
+                } else {
+                    if (!recent || recent.length === 0) {
+                        recentBody.innerHTML = '<tr><td colspan="4" style="color: var(--text-secondary);">No recent activity</td></tr>';
+                    } else {
+                        recentBody.innerHTML = recent.map(r => `
+                            <tr>
+                                <td>${new Date(r.booking_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                                <td>${r.classes?.name || 'Class'}</td>
+                                <td>${r.status === 'confirmed' ? '<span class="badge success"><i class="fas fa-check"></i> Confirmed</span>' : r.status === 'pending' ? '<span class="badge warning"><i class="fas fa-clock"></i> Pending</span>' : '<span class="badge danger"><i class="fas fa-times"></i> Cancelled</span>'}</td>
+                                <td>${r.classes?.instructor || '-'}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+
+                // Summary stats
+                const { data: attendedData } = await supabase
+                    .from('bookings')
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'confirmed');
+                const attended = (attendedData && attendedData.length) || 0;
+                document.getElementById('classesAttendedValue').textContent = attended;
+
+                const upcomingCount = (upcoming && upcoming.length) || 0;
+                document.getElementById('upcomingClassesValue').textContent = upcomingCount;
+
+                // Subscription-aware streak: weekly or monthly based on user subscription
+                const subRaw = (currentUser.subscription || currentUser.membership || currentUser.membership_type || '').toString().toLowerCase();
+                const now = new Date();
+                let periodStart;
+                let periodLabel = 'Days';
+                if (subRaw.includes('month')) {
+                    periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    periodLabel = 'this month';
+                } else {
+                    // default to weekly
+                    const day = now.getDay(); // 0 Sunday
+                    const diff = (day + 6) % 7; // days since Monday
+                    periodStart = new Date(now);
+                    periodStart.setDate(now.getDate() - diff);
+                    periodLabel = 'this week';
+                }
+                const startISO = periodStart.toISOString().split('T')[0];
+                const { data: periodBookings } = await supabase
+                    .from('bookings')
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'confirmed')
+                    .gte('booking_date', startISO);
+                const periodCount = (periodBookings && periodBookings.length) || 0;
+                document.getElementById('currentStreakValue').textContent = `${periodCount} ${periodLabel}`;
+
+                // Certificates (recompute)
+                const certCount = attended >= 10 ? 3 : attended >=5 ? 2 : attended >=1 ? 1 : 0;
+                document.getElementById('certificatesValue').textContent = certCount;
+
+                // Membership
+                document.getElementById('membershipValue').textContent = currentUser.membership || 'Active';
+
+            } catch (err) {
+                console.error('renderDashboardOverview error:', err);
             }
         }
 
