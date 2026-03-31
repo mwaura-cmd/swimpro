@@ -85,16 +85,9 @@
             gap: 20px;
         }
 
-        .google-signin-wrapper {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
+        /* Google sign-in UI removed */
 
-        .google-signin-wrapper ::part(button) {
-            width: 100% !important;
-            height: 44px !important;
-        }
+        /* Google sign-in UI removed */
 
         .divider {
             display: flex;
@@ -321,43 +314,9 @@
             }
         }
 
-        .google-signin-wrapper {
-            margin: 0;
-        }
+        /* Google sign-in UI removed */
 
-        /* Hide default Google button and create custom */
-        #g_id_onload {
-            display: none;
-        }
-
-        .custom-google-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 10px 16px;
-            background: white;
-            color: #1f2937;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            min-height: 44px;
-            font-family: inherit;
-        }
-
-        .custom-google-btn:hover {
-            background: #f9fafb;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .custom-google-btn img {
-            width: 18px;
-            height: 18px;
-        }
+        /* Google sign-in CSS removed */
     </style>
 </head>
 <body>
@@ -387,15 +346,7 @@
                     </button>
                 </div>
 
-                <!-- Google Sign In -->
-                <div id="g_id_onload" 
-                     data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
-                     data-callback="handleCredentialResponse">
-                </div>
-                <button class="custom-google-btn" onclick="signInWithGoogle('login')">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19c1.33-4.02 5.3-7.44 9.46-7.44z'/%3E%3Cpath fill='%234285F4' d='M46.1 24.52c0-1.45-.15-2.85-.41-4.22H24v7.84h11.52c-.26 1.37-.64 2.74-1.15 4.01l8.51 6.62c.9-2.22 1.56-4.78 1.56-7.44z'/%3E%3Cpath fill='%234285F4' d='M24 46.3c5.94 0 10.92-1.97 14.56-5.36l-8.51-6.62c-1.99 1.36-4.55 2.15-7.05 2.15-5.4 0-9.99-3.6-11.63-8.44l-8.15 6.32C6.51 41.62 14.62 46.3 24 46.3z'/%3E%3Cpath fill='%34A853' d='M12.34 28.02c-.36-.9-.57-1.85-.57-2.85 0-1 .2-1.95.57-2.85l-8.15-6.32c-.95 1.92-1.5 4.09-1.5 6.42 0 2.33.55 4.5 1.5 6.42l8.15-6.32z'/%3E%3C/svg%3E" alt="Google">
-                    Continue with Google
-                </button>
+                <!-- Google sign-in removed per request -->
 
                 <div class="divider">
                     <div class="divider-line"></div>
@@ -456,11 +407,7 @@
                     </button>
                 </div>
 
-                <!-- Google Sign Up -->
-                <button class="custom-google-btn" onclick="signUpWithGoogle()">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19c1.33-4.02 5.3-7.44 9.46-7.44z'/%3E%3Cpath fill='%234285F4' d='M46.1 24.52c0-1.45-.15-2.85-.41-4.22H24v7.84h11.52c-.26 1.37-.64 2.74-1.15 4.01l8.51 6.62c.9-2.22 1.56-4.78 1.56-7.44z'/%3E%3Cpath fill='%234285F4' d='M24 46.3c5.94 0 10.92-1.97 14.56-5.36l-8.51-6.62c-1.99 1.36-4.55 2.15-7.05 2.15-5.4 0-9.99-3.6-11.63-8.44l-8.15 6.32C6.51 41.62 14.62 46.3 24 46.3z'/%3E%3Cpath fill='%34A853' d='M12.34 28.02c-.36-.9-.57-1.85-.57-2.85 0-1 .2-1.95.57-2.85l-8.15-6.32c-.95 1.92-1.5 4.09-1.5 6.42 0 2.33.55 4.5 1.5 6.42l8.15-6.32z'/%3E%3C/svg%3E" alt="Google">
-                    Sign up with Google
-                </button>
+                <!-- Google sign-up removed per request -->
 
                 <div class="divider">
                     <div class="divider-line"></div>
@@ -653,13 +600,7 @@
             else sessionStorage.removeItem('signupCooldownUntil');
         }
 
-        function signInWithGoogle(form) {
-            showError('Google Sign-In is not enabled yet. Use email and password for now.', form);
-        }
-
-        function signUpWithGoogle() {
-            showError('Google Sign-Up is not enabled yet. Use email and password for now.', 'signup');
-        }
+        // Google OAuth sign-in removed (disabled UI and flow per request)
 
         async function loginWithEmail(event) {
             event.preventDefault();
@@ -860,6 +801,8 @@
             getSupabase();
             // Restore signup cooldown if any
             restoreSignupCooldownIfAny();
+
+            // OAuth redirect handling removed (Google sign-in disabled)
 
             // Check if user is already logged in
             const user = localStorage.getItem('swimproUser');
