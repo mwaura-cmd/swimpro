@@ -1220,8 +1220,26 @@
                             <div class="card-header">
                                 <h2 class="card-title">Bookings Management</h2>
                             </div>
-                            <div class="card-content">
-                                <p style="color: var(--text-secondary);">Bookings view content here</p>
+                            <div class="card-content" style="padding: 0;">
+                                <div id="bookingsTableContainer" style="overflow-x: auto;">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Student Name</th>
+                                                <th>Email</th>
+                                                <th>Class</th>
+                                                <th>Date</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="bookingsList">
+                                            <tr>
+                                                <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">Loading bookings...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1353,6 +1371,10 @@
     </div>
 
     <script>
+        // ===== SUPABASE CONFIG =====
+        const SUPABASE_URL = 'https://rvpgoyufmegaqxvlwddi.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
+
         // ===== AUTHENTICATION CHECK =====
         function checkAuthentication() {
             const user = localStorage.getItem('swimproUser');
@@ -1370,11 +1392,13 @@
             return userData;
         }
 
+        let currentAdmin = null;
+
         // Initialize user data on page load
         window.addEventListener('load', () => {
-            const user = checkAuthentication();
-            if (user) {
-                updateUserProfile(user);
+            currentAdmin = checkAuthentication();
+            if (currentAdmin) {
+                updateUserProfile(currentAdmin);
             }
         });
 
@@ -1384,6 +1408,108 @@
             
             document.getElementById('userName').textContent = userName;
             document.getElementById('userAvatar').textContent = firstLetter;
+        }
+
+        // ===== BOOKINGS MANAGEMENT =====
+        async function loadBookings() {
+            try {
+                const adminToken = localStorage.getItem('adminToken');
+                if (!adminToken) {
+                    document.getElementById('bookingsList').innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--accent-red); padding: 20px;">Not authenticated as admin</td></tr>';
+                    return;
+                }
+
+                const response = await fetch('/api/bookings', {
+                    headers: { 'x-admin-token': adminToken }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const bookings = await response.json();
+                if (!Array.isArray(bookings) || bookings.length === 0) {
+                    document.getElementById('bookingsList').innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">No bookings yet</td></tr>';
+                    return;
+                }
+
+                const html = bookings.map(booking => `
+                    <tr>
+                        <td>${booking.name || 'N/A'}</td>
+                        <td>${booking.email || 'N/A'}</td>
+                        <td>${booking.category || booking.stroke || 'General'}</td>
+                        <td>${booking.date || 'N/A'}</td>
+                        <td><span class="badge ${booking.status === 'confirmed' || booking.status === 'approved' ? 'success' : booking.status === 'declined' ? 'danger' : 'warning'}"><i class="fas ${booking.status === 'confirmed' || booking.status === 'approved' ? 'fa-check' : booking.status === 'declined' ? 'fa-times' : 'fa-clock'}"></i> ${booking.status || 'pending'}</span></td>
+                        <td>
+                            ${booking.status === 'pending' ? `
+                                <button onclick="approveBooking('${booking.id}')" style="padding: 6px 12px; background: var(--accent-green); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin-right: 6px;">Approve</button>
+                                <button onclick="declineBooking('${booking.id}')" style="padding: 6px 12px; background: var(--accent-red); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Decline</button>
+                            ` : `
+                                <button onclick="deleteBooking('${booking.id}')" style="padding: 6px 12px; background: var(--border-color); color: var(--text-secondary); border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Delete</button>
+                            `}
+                        </td>
+                    </tr>
+                `).join('');
+                
+                document.getElementById('bookingsList').innerHTML = html;
+            } catch (err) {
+                console.error('Error loading bookings:', err);
+                document.getElementById('bookingsList').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--accent-red); padding: 20px;">Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        async function approveBooking(bookingId) {
+            if (!confirm('Approve this booking?')) return;
+            
+            try {
+                const adminToken = localStorage.getItem('adminToken');
+                const response = await fetch(`/api/bookings/${bookingId}/approve`, {
+                    method: 'PUT',
+                    headers: { 'x-admin-token': adminToken }
+                });
+
+                if (!response.ok) throw new Error('Approval failed');
+                alert('Booking approved!');
+                loadBookings();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function declineBooking(bookingId) {
+            if (!confirm('Decline this booking?')) return;
+            
+            try {
+                const adminToken = localStorage.getItem('adminToken');
+                const response = await fetch(`/api/bookings/${bookingId}/decline`, {
+                    method: 'PUT',
+                    headers: { 'x-admin-token': adminToken }
+                });
+
+                if (!response.ok) throw new Error('Decline failed');
+                alert('Booking declined!');
+                loadBookings();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function deleteBooking(bookingId) {
+            if (!confirm('Delete this booking?')) return;
+            
+            try {
+                const adminToken = localStorage.getItem('adminToken');
+                const response = await fetch(`/api/bookings/${bookingId}`, {
+                    method: 'DELETE',
+                    headers: { 'x-admin-token': adminToken }
+                });
+
+                if (!response.ok) throw new Error('Delete failed');
+                alert('Booking deleted!');
+                loadBookings();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
         }
 
         // ===== SIDEBAR TOGGLE =====
@@ -1437,6 +1563,11 @@
                 };
                 document.getElementById('pageTitle').textContent = titles[section];
 
+                // Load bookings when viewing that section
+                if (section === 'bookings') {
+                    loadBookings();
+                }
+
                 // Close sidebar on mobile
                 if (window.innerWidth <= 768) {
                     sidebar.classList.remove('open');
@@ -1459,6 +1590,7 @@
             if (confirm('Are you sure you want to logout?')) {
                 localStorage.removeItem('swimproUser');
                 localStorage.removeItem('swimproToken');
+                localStorage.removeItem('adminToken');
                 window.location.href = 'login.html';
             }
         });
