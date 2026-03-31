@@ -13,6 +13,142 @@
             box-sizing: border-box;
         }
 
+        async function renderDashboardOverview() {
+            try {
+                if (!currentUser) return;
+                const supabase = getSupabaseClient();
+                const today = new Date().toISOString().split('T')[0];
+
+                // Upcoming bookings (pending or confirmed)
+                const { data: upcoming, error: upErr } = await supabase
+                    .from('bookings')
+                    .select('id, booking_date, suggested_time, status, class_id, classes(name, instructor)')
+                    .eq('user_id', currentUser.id)
+                    .in('status', ['pending','confirmed'])
+                    .gte('booking_date', today)
+                    .order('booking_date', { ascending: true })
+                    .limit(5);
+
+                const upcomingContainer = document.getElementById('upcomingClassesContainer');
+                const upcomingBadge = document.getElementById('upcomingBadge');
+                if (upErr) {
+                    console.error('Error loading upcoming:', upErr);
+                    upcomingContainer.innerHTML = '<p style="color: var(--accent-red);">Failed to load upcoming classes</p>';
+                    upcomingBadge.textContent = '0 Scheduled';
+                } else {
+                    const list = upcoming || [];
+                    upcomingBadge.textContent = `${list.length} Scheduled`;
+                    if (list.length === 0) {
+                        upcomingContainer.innerHTML = '<p style="color: var(--text-secondary);">No upcoming classes. Book a class to get started.</p>';
+                    } else {
+                        upcomingContainer.innerHTML = list.map(b => {
+                            const d = new Date(b.booking_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            const time = b.suggested_time || 'TBD';
+                            const instructor = b.classes?.instructor || 'Instructor';
+                            const btn = b.status === 'confirmed' ? '<button class="book-btn">Join Now</button>' : '<button class="book-btn">Manage</button>';
+                            return `
+                                <div class="class-card">
+                                    <div class="class-time">
+                                        <div class="class-time-big">${d.split(' ')[1] || d}</div>
+                                        <div class="class-time-small">${d.split(' ')[0] || ''}</div>
+                                    </div>
+                                    <div class="class-info">
+                                        <div class="class-name">${b.classes?.name || 'Class'}</div>
+                                        <div class="class-instructor"><i class="fas fa-user-circle"></i> ${instructor}</div>
+                                        <div class="class-meta">
+                                            <span><i class="fas fa-clock"></i> ${time}</span>
+                                            <span><i class="fas fa-info-circle"></i> ${b.status}</span>
+                                        </div>
+                                    </div>
+                                    <div class="class-action">${btn}</div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // Today's schedule summary for welcome card
+                const { data: todays, error: tdErr } = await supabase
+                    .from('bookings')
+                    .select('booking_date, suggested_time, classes(name)')
+                    .eq('user_id', currentUser.id)
+                    .eq('booking_date', today);
+                if (!tdErr && todays && todays.length > 0) {
+                    const next = todays.sort((a,b) => (a.suggested_time || '') > (b.suggested_time || '') ? 1 : -1)[0];
+                    document.getElementById('welcomeName').textContent = `Welcome back, ${currentUser.name || currentUser.email.split('@')[0]}`;
+                    document.getElementById('welcomeDetail').textContent = `You have ${todays.length} class${todays.length>1? 'es':''} scheduled for today at ${next.suggested_time || 'TBD'}`;
+                } else {
+                    document.getElementById('welcomeName').textContent = `Welcome back, ${currentUser.name || currentUser.email.split('@')[0]}`;
+                    document.getElementById('welcomeDetail').textContent = 'No classes scheduled for today';
+                }
+
+                // Recent activity (last 5 bookings)
+                const { data: recent, error: recErr } = await supabase
+                    .from('bookings')
+                    .select('booking_date, status, classes(name, instructor)')
+                    .eq('user_id', currentUser.id)
+                    .order('booking_date', { ascending: false })
+                    .limit(5);
+                const recentBody = document.getElementById('recentActivityBody');
+                if (recErr) {
+                    console.error('Error recent activity:', recErr);
+                    recentBody.innerHTML = '<tr><td colspan="4" style="color: var(--accent-red);">Failed to load recent activity</td></tr>';
+                } else {
+                    if (!recent || recent.length === 0) {
+                        recentBody.innerHTML = '<tr><td colspan="4" style="color: var(--text-secondary);">No recent activity</td></tr>';
+                    } else {
+                        recentBody.innerHTML = recent.map(r => `
+                            <tr>
+                                <td>${new Date(r.booking_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                                <td>${r.classes?.name || 'Class'}</td>
+                                <td>${r.status === 'confirmed' ? '<span class="badge success"><i class="fas fa-check"></i> Confirmed</span>' : r.status === 'pending' ? '<span class="badge warning"><i class="fas fa-clock"></i> Pending</span>' : '<span class="badge danger"><i class="fas fa-times"></i> Cancelled</span>'}</td>
+                                <td>${r.classes?.instructor || '-'}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+
+                // Summary stats
+                const { data: attendedData } = await supabase
+                    .from('bookings')
+                    .select('id', { count: 'exact' })
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'confirmed');
+                const attended = (attendedData && attendedData.length) || 0;
+                document.getElementById('classesAttendedValue').textContent = attended;
+
+                const upcomingCount = (upcoming && upcoming.length) || 0;
+                document.getElementById('upcomingClassesValue').textContent = upcomingCount;
+
+                // Current streak (approx: unique confirmed days in last 7 days)
+                const date7 = new Date(); date7.setDate(date7.getDate() - 6);
+                const fromDate = date7.toISOString().split('T')[0];
+                const { data: last7 } = await supabase
+                    .from('bookings')
+                    .select('booking_date', { count: 'exact' })
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'confirmed')
+                    .gte('booking_date', fromDate);
+                const streakDays = last7 ? last7.length : 0;
+                document.getElementById('currentStreakValue').textContent = `${streakDays} Days`;
+
+                // Certificates (recompute)
+                const { data: conf } = await supabase
+                    .from('bookings')
+                    .select('id', { count: 'exact' })
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'confirmed');
+                const certCount = conf ? conf.length >= 10 ? 3 : conf.length >=5 ? 2 : conf.length >=1 ? 1 : 0 : 0;
+                document.getElementById('certificatesValue').textContent = certCount;
+
+                // Membership
+                document.getElementById('membershipValue').textContent = currentUser.membership || 'Active';
+
+            } catch (err) {
+                console.error('renderDashboardOverview error:', err);
+            }
+        }
+
         :root {
             --dark-bg: #0f1419;
             --darker-bg: #0a0f14;
@@ -910,8 +1046,8 @@
                                 <div style="display: flex; align-items: center; gap: 15px;">
                                     <div style="font-size: 2.5rem;">👋</div>
                                     <div>
-                                        <h2 style="color: var(--text-primary); margin-bottom: 4px;">Welcome back, John!</h2>
-                                        <p style="color: var(--text-secondary); font-size: 0.9rem;">You have 1 class scheduled for today at 10:00 AM</p>
+                                        <h2 id="welcomeName" style="color: var(--text-primary); margin-bottom: 4px;">Welcome back</h2>
+                                        <p id="welcomeDetail" style="color: var(--text-secondary); font-size: 0.9rem;">Loading schedule...</p>
                                     </div>
                                 </div>
                             </div>
@@ -919,68 +1055,18 @@
 
                         <!-- Upcoming Classes -->
                         <div class="card">
-                            <div class="card-header">
+                                <div class="card-header">
                                 <h2 class="card-title">
                                     <i class="fas fa-clock" style="margin-right: 8px; color: var(--accent-blue);"></i>
                                     Upcoming Classes
                                 </h2>
                                 <div class="card-header-right">
-                                    <span class="badge info">3 Scheduled</span>
+                                    <span id="upcomingBadge" class="badge info">0 Scheduled</span>
                                 </div>
                             </div>
                             <div class="card-content">
-                                <div class="class-card">
-                                    <div class="class-time">
-                                        <div class="class-time-big">10</div>
-                                        <div class="class-time-small">TODAY</div>
-                                    </div>
-                                    <div class="class-info">
-                                        <div class="class-name">Freestyle Basics</div>
-                                        <div class="class-instructor"><i class="fas fa-user-circle"></i> Denis Mwaura</div>
-                                        <div class="class-meta">
-                                            <span><i class="fas fa-clock"></i> 10:00 AM - 11:00 AM</span>
-                                            <span><i class="fas fa-users"></i> 5/8 students</span>
-                                        </div>
-                                    </div>
-                                    <div class="class-action">
-                                        <button class="book-btn">Join Now</button>
-                                    </div>
-                                </div>
-
-                                <div class="class-card">
-                                    <div class="class-time">
-                                        <div class="class-time-big">14</div>
-                                        <div class="class-time-small">TOMORROW</div>
-                                    </div>
-                                    <div class="class-info">
-                                        <div class="class-name">Backstroke Advanced</div>
-                                        <div class="class-instructor"><i class="fas fa-user-circle"></i> Kennedy Munyua</div>
-                                        <div class="class-meta">
-                                            <span><i class="fas fa-clock"></i> 2:00 PM - 3:00 PM</span>
-                                            <span><i class="fas fa-users"></i> 6/6 students</span>
-                                        </div>
-                                    </div>
-                                    <div class="class-action">
-                                        <button class="book-btn">Book</button>
-                                    </div>
-                                </div>
-
-                                <div class="class-card">
-                                    <div class="class-time">
-                                        <div class="class-time-big">16</div>
-                                        <div class="class-time-small">THU</div>
-                                    </div>
-                                    <div class="class-info">
-                                        <div class="class-name">Breaststroke Relaxation</div>
-                                        <div class="class-instructor"><i class="fas fa-user-circle"></i> Denis Mwaura</div>
-                                        <div class="class-meta">
-                                            <span><i class="fas fa-clock"></i> 4:00 PM - 5:00 PM</span>
-                                            <span><i class="fas fa-users"></i> 3/8 students</span>
-                                        </div>
-                                    </div>
-                                    <div class="class-action">
-                                        <button class="book-btn">Book</button>
-                                    </div>
+                                <div id="upcomingClassesContainer">
+                                    <p style="color: var(--text-secondary);">Loading upcoming classes...</p>
                                 </div>
                             </div>
                         </div>
@@ -1003,11 +1089,10 @@
                                             <th>Instructor</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="recentActivityBody">
                                         <tr>
-                                            <td>Mar 28, 2026</td>
-                                            <td>Freestyle Basics</td>
-                                            <td><span class="badge success"><i class="fas fa-check"></i> Completed</span></td>
+                                            <td colspan="4" style="color: var(--text-secondary);">Loading recent activity...</td>
+                                        </tr>
                                             <td>Denis Mwaura</td>
                                         </tr>
                                         <tr>
@@ -1246,7 +1331,7 @@
                             </div>
                             <div style="flex: 1;">
                                 <div class="stat-label">Classes Attended</div>
-                                <div class="stat-value">24</div>
+                                <div id="classesAttendedValue" class="stat-value">0</div>
                             </div>
                         </div>
                         <div class="stat-change positive">
@@ -1261,7 +1346,7 @@
                             </div>
                             <div style="flex: 1;">
                                 <div class="stat-label">Upcoming Classes</div>
-                                <div class="stat-value">3</div>
+                                <div id="upcomingClassesValue" class="stat-value">0</div>
                             </div>
                         </div>
                         <div style="font-size: 0.8rem; color: var(--text-secondary);">
@@ -1276,7 +1361,7 @@
                             </div>
                             <div style="flex: 1;">
                                 <div class="stat-label">Current Streak</div>
-                                <div class="stat-value">7 Days</div>
+                                <div id="currentStreakValue" class="stat-value">0 Days</div>
                             </div>
                         </div>
                         <div class="stat-change positive">
@@ -1291,7 +1376,7 @@
                             </div>
                             <div style="flex: 1;">
                                 <div class="stat-label">Certificates</div>
-                                <div class="stat-value">3</div>
+                                <div id="certificatesValue" class="stat-value">0</div>
                             </div>
                         </div>
                         <div style="font-size: 0.8rem; color: var(--text-secondary);">
@@ -1306,7 +1391,7 @@
                             </div>
                             <div style="flex: 1;">
                                 <div class="stat-label">Membership</div>
-                                <div class="stat-value">Active</div>
+                                <div id="membershipValue" class="stat-value">Active</div>
                             </div>
                         </div>
                         <div style="font-size: 0.8rem; color: var(--text-secondary);">
@@ -1353,6 +1438,9 @@
                 updateUserProfile(currentUser);
                 loadClasses();
                 loadBookings();
+                renderDashboardOverview();
+                loadCertificates();
+                loadProgress();
             }
         });
 
@@ -1862,6 +1950,7 @@
                 if (section === 'certificates') loadCertificates();
                 if (section === 'progress') loadProgress();
                 if (section === 'profile') loadProfile();
+                if (section === 'dashboard') renderDashboardOverview();
 
                 if (window.innerWidth <= 768) {
                     sidebar.classList.remove('open');
