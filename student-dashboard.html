@@ -1195,9 +1195,19 @@
                                     <input type="text" id="bookingClassName" readonly style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
                                 </div>
                                 <div>
-                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Class Date & Time</label>
-                                    <input type="datetime-local" id="bookingClassDate" required style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
-                                    <small style="display: block; margin-top: 4px; color: var(--text-secondary);">Select your preferred class time</small>
+                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Class ID (Internal)</label>
+                                    <input type="hidden" id="bookingClassId">
+                                    <small style="display: block; color: var(--text-secondary);">Availability: 10:00 AM - 6:00 PM</small>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Preferred Date</label>
+                                    <input type="date" id="bookingClassDate" required style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
+                                    <small style="display: block; margin-top: 4px; color: var(--text-secondary);">Select the date you want to book</small>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Suggested Time</label>
+                                    <input type="time" id="bookingSuggestedTime" required style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
+                                    <small style="display: block; margin-top: 4px; color: var(--text-secondary);">Must be between 10:00 AM and 6:00 PM</small>
                                 </div>
                                 <div>
                                     <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Student Name</label>
@@ -1460,8 +1470,10 @@
                 studentName = emailParts.charAt(0).toUpperCase() + emailParts.slice(1);
             }
             
+            document.getElementById('bookingClassId').value = classId;
             document.getElementById('bookingClassName').value = className;
             document.getElementById('bookingClassDate').value = defaultDate || '';
+            document.getElementById('bookingSuggestedTime').value = '10:00';
             document.getElementById('bookingStudentName').value = studentName || '';
             document.getElementById('bookingStudentEmail').value = currentUser?.email || '';
             document.getElementById('bookingStudentPhone').value = '';
@@ -1486,18 +1498,26 @@
                     return;
                 }
 
-                const classId = e.target.dataset.classId;
+                const classId = document.getElementById('bookingClassId').value;
+                const suggestedTime = document.getElementById('bookingSuggestedTime').value;
+                
+                // Validate time is within 10 AM - 6 PM
+                const timeParts = suggestedTime.split(':');
+                const hour = parseInt(timeParts[0]);
+                if (hour < 10 || hour >= 18) {
+                    alert('Class time must be between 10:00 AM and 6:00 PM');
+                    return;
+                }
+                
                 const bookingData = {
                     class_id: classId,
-                    name: document.getElementById('bookingClassName').value,
-                    date: document.getElementById('bookingClassDate').value,
+                    name: document.getElementById('bookingStudentName').value,
                     email: document.getElementById('bookingStudentEmail').value,
                     phone: document.getElementById('bookingStudentPhone').value,
-                    category: document.getElementById('bookingClassName').value,
-                    stroke: 'General',
+                    date: document.getElementById('bookingClassDate').value,
+                    suggested_time: suggestedTime,
                     message: document.getElementById('bookingMessage').value,
-                    paid: false,
-                    status: 'pending'
+                    paid: false
                 };
 
                 const response = await fetch('/api/bookings', {
@@ -1511,11 +1531,11 @@
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.error || 'Booking failed');
+                    throw new Error(error.details || error.error || 'Booking failed');
                 }
 
                 const result = await response.json();
-                alert('Booking created successfully! Status: ' + (result.status || 'pending'));
+                alert('✅ Booking created successfully! Waiting for instructor approval.');
                 closeBookingModal();
                 loadBookings();
                 loadClasses();

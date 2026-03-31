@@ -230,17 +230,16 @@ app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), asyn
     const userId = req.user.id;
     const b = {
       user_id: userId,
+      class_id: req.body.class_id || null,
       name: req.body.name || '',
       email: req.body.email || '',
       phone: req.body.phone || '',
-      category: req.body.category || '',
-      stroke: req.body.stroke || '',
-      date: req.body.date || '',
+      booking_date: req.body.date || null,
+      suggested_time: req.body.suggested_time || null,
       message: req.body.message || '',
       paid: req.body.paid === 'true' || req.body.paid === true,
       screenshot: req.file ? `/uploads/${req.file.filename}` : null,
-      status: 'pending',
-      created_at: new Date().toISOString()
+      status: 'pending'
     };
 
     const { data, error } = await supabase
@@ -249,18 +248,16 @@ app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), asyn
       .select();
 
     if (error) {
+      console.error('Supabase error:', error);
       return res.status(400).json({ error: 'Failed to create booking', details: error.message });
     }
 
-    // Also store in file-based backup
-    const bookings = readBookings();
-    bookings.push({ ...b, id: data[0].id });
-    writeBookings(bookings);
-
     // Send email notification (fire-and-forget)
-    sendBookingEmail({ ...b, id: data[0].id });
+    if (data && data.length > 0) {
+      sendBookingEmail({ ...b, id: data[0].id });
+    }
 
-    res.json(data[0]);
+    res.json(data[0] || b);
   } catch (err) {
     console.error('Booking creation error:', err);
     res.status(500).json({ error: 'Booking creation failed', details: err.message });
