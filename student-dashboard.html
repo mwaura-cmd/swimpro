@@ -1061,36 +1061,38 @@
                                 <h2 class="card-title">Payment History</h2>
                             </div>
                             <div class="card-content" style="padding: 0;">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Description</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Mar 30, 2026</td>
-                                            <td>Monthly Premium - March</td>
-                                            <td>KSh 4,000</td>
-                                            <td><span class="badge success"><i class="fas fa-check"></i> Paid</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Feb 28, 2026</td>
-                                            <td>Monthly Premium - February</td>
-                                            <td>KSh 4,000</td>
-                                            <td><span class="badge success"><i class="fas fa-check"></i> Paid</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Jan 30, 2026</td>
-                                            <td>Monthly Premium - January</td>
-                                            <td>KSh 4,000</td>
-                                            <td><span class="badge success"><i class="fas fa-check"></i> Paid</span></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <div id="payments-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Description</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Mar 30, 2026</td>
+                                                <td>Monthly Premium - March</td>
+                                                <td>KSh 4,000</td>
+                                                <td><span class="badge success"><i class="fas fa-check"></i> Paid</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Feb 28, 2026</td>
+                                                <td>Monthly Premium - February</td>
+                                                <td>KSh 4,000</td>
+                                                <td><span class="badge success"><i class="fas fa-check"></i> Paid</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Jan 30, 2026</td>
+                                                <td>Monthly Premium - January</td>
+                                                <td>KSh 4,000</td>
+                                                <td><span class="badge success"><i class="fas fa-check"></i> Paid</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1101,7 +1103,7 @@
                                 <h2 class="card-title">Achievements & Certificates</h2>
                             </div>
                             <div class="card-content">
-                                <div class="grid">
+                                <div id="certificates-container" class="grid">
                                     <div class="cert-badge">
                                         <div class="cert-icon">🏅</div>
                                         <div class="cert-name">Freestyle Master</div>
@@ -1128,43 +1130,45 @@
                                 <h2 class="card-title">Your Progress</h2>
                             </div>
                             <div class="card-content">
-                                <div style="margin-bottom: 20px;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                        <span style="color: var(--text-primary); font-weight: 600;">Freestyle</span>
-                                        <span style="color: var(--text-secondary);">75%</span>
+                                <div id="progress-container">
+                                    <div style="margin-bottom: 20px;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="color: var(--text-primary); font-weight: 600;">Freestyle</span>
+                                            <span style="color: var(--text-secondary);">75%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 75%;"></div>
+                                        </div>
                                     </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 75%;"></div>
-                                    </div>
-                                </div>
 
-                                <div style="margin-bottom: 20px;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                        <span style="color: var(--text-primary); font-weight: 600;">Backstroke</span>
-                                        <span style="color: var(--text-secondary);">60%</span>
+                                    <div style="margin-bottom: 20px;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="color: var(--text-primary); font-weight: 600;">Backstroke</span>
+                                            <span style="color: var(--text-secondary);">60%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 60%;"></div>
+                                        </div>
                                     </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 60%;"></div>
-                                    </div>
-                                </div>
 
-                                <div style="margin-bottom: 20px;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                        <span style="color: var(--text-primary); font-weight: 600;">Breaststroke</span>
-                                        <span style="color: var(--text-secondary);">45%</span>
+                                    <div style="margin-bottom: 20px;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="color: var(--text-primary); font-weight: 600;">Breaststroke</span>
+                                            <span style="color: var(--text-secondary);">45%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 45%;"></div>
+                                        </div>
                                     </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 45%;"></div>
-                                    </div>
-                                </div>
 
-                                <div>
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                        <span style="color: var(--text-primary); font-weight: 600;">Butterfly</span>
-                                        <span style="color: var(--text-secondary);">20%</span>
-                                    </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 20%;"></div>
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                            <span style="color: var(--text-primary); font-weight: 600;">Butterfly</span>
+                                            <span style="color: var(--text-secondary);">20%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 20%;"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1177,7 +1181,9 @@
                                 <h2 class="card-title">Profile Settings</h2>
                             </div>
                             <div class="card-content">
-                                <p style="color: var(--text-secondary);">Manage your profile information and preferences</p>
+                                <div id="profile-container">
+                                    <p style="color: var(--text-secondary);">Manage your profile information and preferences</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1462,6 +1468,237 @@
             }
         }
 
+        async function loadPayments() {
+            try {
+                const token = localStorage.getItem('swimproToken');
+                if (!token) {
+                    document.getElementById('payments-container').innerHTML = '<p style="color: var(--text-secondary);">Please login to view payments</p>';
+                    return;
+                }
+
+                const supabase = getSupabaseClient();
+                const { data: bookings, error } = await supabase
+                    .from('bookings')
+                    .select('id, class_id, booking_date, status, classes(pricing_daily_student, pricing_monthly_student)')
+                    .eq('user_id', currentUser?.id)
+                    .order('booking_date', { ascending: false });
+
+                if (error) {
+                    console.error('Error loading payments:', error);
+                    document.getElementById('payments-container').innerHTML = '<p style="color: var(--accent-red);">Error loading payments</p>';
+                    return;
+                }
+
+                const bookingList = bookings || [];
+                if (bookingList.length === 0) {
+                    document.getElementById('payments-container').innerHTML = '<p style="color: var(--text-secondary);">No bookings/payments yet</p>';
+                    return;
+                }
+
+                const paymentRows = bookingList.map(b => {
+                    const bookingDate = new Date(b.booking_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const amount = b.classes?.pricing_daily_student || 500;
+                    const statusBadge = b.status === 'confirmed' 
+                        ? '<span class="badge success"><i class="fas fa-check"></i> Paid</span>'
+                        : b.status === 'pending'
+                        ? '<span class="badge warning"><i class="fas fa-clock"></i> Pending</span>'
+                        : '<span class="badge danger"><i class="fas fa-times"></i> Cancelled</span>';
+                    
+                    return `
+                        <tr>
+                            <td>${bookingDate}</td>
+                            <td>Swimming Class</td>
+                            <td>KSh ${amount.toLocaleString()}</td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                const html = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${paymentRows}</tbody>
+                    </table>
+                `;
+
+                document.getElementById('payments-container').innerHTML = html;
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('payments-container').innerHTML = '<p style="color: var(--accent-red); padding: 20px;">Error loading payments</p>';
+            }
+        }
+
+        async function loadProfile() {
+            try {
+                const token = localStorage.getItem('swimproToken');
+                if (!token) {
+                    document.getElementById('profile-container').innerHTML = '<p style="color: var(--text-secondary);">Please login to view profile</p>';
+                    return;
+                }
+
+                let name = currentUser?.name || 'Student';
+                if (name === 'Student' && currentUser?.email) {
+                    const emailParts = currentUser.email.split('@')[0];
+                    name = emailParts.charAt(0).toUpperCase() + emailParts.slice(1);
+                }
+
+                const email = currentUser?.email || 'user@example.com';
+                const createdAt = currentUser?.created_at 
+                    ? new Date(currentUser.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                    : 'Recently';
+
+                const html = `
+                    <div style="max-width: 600px;">
+                        <div style="margin-bottom: 24px;">
+                            <label style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-bottom: 8px;">Full Name</label>
+                            <input type="text" value="${name}" readonly style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); cursor: not-allowed; opacity: 0.7;">
+                        </div>
+                        <div style="margin-bottom: 24px;">
+                            <label style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-bottom: 8px;">Email</label>
+                            <input type="email" value="${email}" readonly style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); cursor: not-allowed; opacity: 0.7;">
+                        </div>
+                        <div style="margin-bottom: 24px;">
+                            <label style="color: var(--text-secondary); font-size: 0.9rem; display: block; margin-bottom: 8px;">Member Since</label>
+                            <p style="color: var(--text-primary); margin: 0; font-weight: 500;">${createdAt}</p>
+                        </div>
+                        <div style="padding-top: 20px; border-top: 1px solid var(--border-color); margin-top: 20px;">
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Profile information is managed through your email account. Contact support to update your details.</p>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('profile-container').innerHTML = html;
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('profile-container').innerHTML = '<p style="color: var(--accent-red);">Error loading profile</p>';
+            }
+        }
+
+        async function loadCertificates() {
+            try {
+                const token = localStorage.getItem('swimproToken');
+                if (!token) {
+                    document.getElementById('certificates-container').innerHTML = '<p style="color: var(--text-secondary);">Please login to view certificates</p>';
+                    return;
+                }
+
+                const supabase = getSupabaseClient();
+                const { data: bookings, error } = await supabase
+                    .from('bookings')
+                    .select('id, class_id, booking_date, status, classes(stroke, level)')
+                    .eq('user_id', currentUser?.id)
+                    .eq('status', 'confirmed')
+                    .order('booking_date', { ascending: false });
+
+                if (error) {
+                    console.error('Error loading certificates:', error);
+                    document.getElementById('certificates-container').innerHTML = '<p style="color: var(--accent-red);">Error loading certificates</p>';
+                    return;
+                }
+
+                const confirmedBookings = bookings || [];
+                const uniqueStrokes = new Set(confirmedBookings.map(b => b.classes?.stroke).filter(Boolean));
+                const certificates = [];
+
+                if (confirmedBookings.length >= 1) {
+                    certificates.push({icon: '🏊', name: 'First Class', date: new Date(confirmedBookings[0].booking_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })});
+                }
+                if (confirmedBookings.length >= 5) {
+                    certificates.push({icon: '🏅', name: '5 Classes Complete', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })});
+                }
+                if (confirmedBookings.length >= 10) {
+                    certificates.push({icon: '🥇', name: '10 Classes Complete', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })});
+                }
+                if (uniqueStrokes.size >= 2) {
+                    certificates.push({icon: '⭐', name: 'Multi-Stroke Swimmer', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })});
+                }
+
+                let html = '';
+
+                if (certificates.length === 0) {
+                    html = '<p style="color: var(--text-secondary); grid-column: 1/-1;">Complete classes to earn certificates!</p>';
+                } else {
+                    html = certificates.map(cert => `
+                        <div class="cert-badge">
+                            <div class="cert-icon">${cert.icon}</div>
+                            <div class="cert-name">${cert.name}</div>
+                            <div class="cert-date">Earned ${cert.date}</div>
+                        </div>
+                    `).join('');
+                }
+
+                document.getElementById('certificates-container').innerHTML = html;
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('certificates-container').innerHTML = '<p style="color: var(--accent-red);">Error loading certificates</p>';
+            }
+        }
+
+        async function loadProgress() {
+            try {
+                const token = localStorage.getItem('swimproToken');
+                if (!token) {
+                    document.getElementById('progress-container').innerHTML = '<p style="color: var(--text-secondary);">Please login to view progress</p>';
+                    return;
+                }
+
+                const supabase = getSupabaseClient();
+                const { data: bookings, error } = await supabase
+                    .from('bookings')
+                    .select('id, class_id, classes(stroke)')
+                    .eq('user_id', currentUser?.id)
+                    .eq('status', 'confirmed');
+
+                if (error) {
+                    console.error('Error loading progress:', error);
+                    document.getElementById('progress-container').innerHTML = '<p style="color: var(--accent-red);">Error loading progress</p>';
+                    return;
+                }
+
+                const confirmedBookings = bookings || [];
+                const strokeCounts = {};
+                const strokes = ['Freestyle', 'Backstroke', 'Breaststroke', 'Butterfly', 'Water Treading'];
+
+                confirmedBookings.forEach(b => {
+                    const stroke = b.classes?.stroke || 'Unknown';
+                    strokeCounts[stroke] = (strokeCounts[stroke] || 0) + 1;
+                });
+
+                const getProgress = (count) => Math.min(100, count * 20);
+
+                let html = '';
+
+                strokes.forEach(stroke => {
+                    const count = strokeCounts[stroke] || 0;
+                    const progress = getProgress(count);
+                    html += `
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="color: var(--text-primary); font-weight: 600;">${stroke}</span>
+                                <span style="color: var(--text-secondary);">${progress}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%;"></div>
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 4px;">${count} class${count !== 1 ? 'es' : ''} completed</div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('progress-container').innerHTML = html;
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('progress-container').innerHTML = '<p style="color: var(--accent-red);">Error loading progress</p>';
+            }
+        }
+
         function openBookingModal(classId, className, defaultDate = '') {
             // Extract name from email if needed
             let studentName = currentUser?.name;
@@ -1599,9 +1836,13 @@
                 };
                 document.getElementById('pageTitle').textContent = titles[section];
 
-                // Refresh data when viewing bookings or classes
+                // Refresh data when viewing each section
                 if (section === 'bookings') loadBookings();
                 if (section === 'classes') loadClasses();
+                if (section === 'payments') loadPayments();
+                if (section === 'certificates') loadCertificates();
+                if (section === 'progress') loadProgress();
+                if (section === 'profile') loadProfile();
 
                 if (window.innerWidth <= 768) {
                     sidebar.classList.remove('open');
