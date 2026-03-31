@@ -1559,7 +1559,7 @@ body {
     .testimonials-grid { animation-duration: 55s; gap: 0.75rem; }
     .testimonial-card { min-width: 65vw; height: auto; padding: 1rem; }
     .testimonial-info h4 { font-size: 0.85rem; }
-    .testimonial-text { font-size: 0.9rem; -webkit-line-clamp: unset; overflow: visible; }
+    .testimonial-text { font-size: 0.9rem; -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
 
     /* Booking form — full-width on mobile */
     .contact-wrapper { flex-direction: column; }
@@ -1675,7 +1675,7 @@ body {
     .testimonial-info h4 { font-size: 0.95rem; font-weight: 700; }
     .testimonial-info .role { font-size: 0.8rem; }
     .stars { font-size: 0.8rem; }
-    .testimonial-text { font-size: 0.85rem; line-height: 1.5; -webkit-line-clamp: unset; overflow: visible; }
+    .testimonial-text { font-size: 0.85rem; line-height: 1.5; -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
     .testimonials-container { max-width: 100%; }
     .testimonials-section { min-height: auto; }
 
@@ -1811,9 +1811,9 @@ body {
 }
 
 /* =====================
-   DARK MODE THEME
-   (🌙 button adds body.dark-mode; default is light)
-   ===================== */
+    DARK MODE THEME
+    (theme toggle button adds body.dark-mode; default is light)
+    ===================== */
 body.dark-mode {
     background: #0d1117;
     color: #e6edf3;

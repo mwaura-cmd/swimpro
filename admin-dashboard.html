@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwimPro Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #0066cc;
+            --secondary-color: #00a8e8;
+            --accent-color: #ff6b6b;
+            --dark-bg: #0f1419;
+            --light-bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --border-color: #e0e6ed;
+            --text-primary: #1a1a2e;
+            --text-secondary: #666;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --sidebar-width: 260px;
+            --header-height: 70px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--light-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* ===== HEADER ===== */
+        .dashboard-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        .logo-small {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            letter-spacing: -0.5px;
+        }
+
+        .role-badge {
+            display: inline-block;
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--accent-color);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-search {
+            display: flex;
+            align-items: center;
+            background: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            gap: 10px;
+            width: 300px;
+        }
+
+        .header-search input {
+            background: none;
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 10px;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), var(--warning));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: var(--header-height);
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px 0;
+            overflow-y: auto;
+            z-index: 999;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            padding: 0 20px;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin: 0;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-nav a:hover {
+            color: var(--primary-color);
+            background: rgba(0, 102, 204, 0.05);
+            border-left-color: var(--primary-color);
+        }
+
+        .sidebar-nav a.active {
+            color: var(--accent-color);
+            background: rgba(255, 107, 107, 0.08);
+            border-left-color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .sidebar-nav i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .dashboard-container {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            padding: 30px;
+            min-height: calc(100vh - var(--header-height));
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* ===== GRID SYSTEM ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .grid.grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        }
+
+        .grid.grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+
+        .grid.grid-4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 16px rgba(255, 107, 107, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .card-icon.danger {
+            background: linear-gradient(135deg, var(--accent-color), #c0392b);
+            color: white;
+        }
+
+        .card-icon.warning {
+            background: linear-gradient(135deg, var(--warning), #e67e22);
+            color: white;
+        }
+
+        .card-icon.success {
+            background: linear-gradient(135deg, var(--success), #229954);
+            color: white;
+        }
+
+        .card-content {
+            flex: 1;
+        }
+
+        .card-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* ===== STAT CARDS ===== */
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 10px 0 5px 0;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--light-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        /* ===== BOOKING TABLE ===== */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+        }
+
+        th {
+            background: var(--light-bg);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background: var(--light-bg);
+        }
+
+        .student-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .student-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+
+        /* ===== SECTION ===== */
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--accent-color);
+            font-size: 1.5rem;
+        }
+
+        /* ===== QUICK STATS ===== */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, var(--accent-color), #c0392b);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-box-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-box-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover {
+            color: var(--accent-color);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1200px) {
+            :root {
+                --sidebar-width: 240px;
+            }
+
+            .grid.grid-4 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-width: 100%;
+            }
+
+            .hamburger-btn {
+                display: block;
+            }
+
+            .dashboard-container {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .header-search {
+                display: none;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: calc(100vh - var(--header-height));
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .grid.grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .grid.grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .table-container {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-container {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .page-title {
+                font-size: 1.3rem;
+            }
+
+            .grid.grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ===== DARK MODE ===== */
+        body.dark-mode {
+            --light-bg: #1a1f2e;
+            --card-bg: #232e43;
+            --border-color: #3a4a5c;
+            --text-primary: #e1e8f0;
+            --text-secondary: #b0b8c4;
+        }
+
+        body.dark-mode .sidebar,
+        body.dark-mode .dashboard-header {
+            background: var(--card-bg);
+        }
+
+        body.dark-mode table {
+            background: var(--card-bg);
+        }
+
+        body.dark-mode th {
+            background: var(--light-bg);
+        }
+
+        .action-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-width: 150px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .dropdown-menu.active {
+            display: block;
+        }
+
+        .dropdown-menu a,
+        .dropdown-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 15px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            transition: background 0.2s;
+        }
+
+        .dropdown-menu a:hover,
+        .dropdown-menu button:hover {
+            background: var(--light-bg);
+        }
+
+        .dropdown-menu a.danger,
+        .dropdown-menu button.danger {
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo-small">
+                <i class="fas fa-water"></i> SwimPro <span class="role-badge">Instructor</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search bookings...">
+            </div>
+            <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+            <div class="user-profile">
+                <div class="user-avatar">D</div>
+                <span id="userName">Denis</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-title">Dashboard</div>
+            <ul class="sidebar-nav">
+                <li><a href="#overview" class="nav-link active" data-section="overview">
+                    <i class="fas fa-chart-bar"></i> Overview
+                </a></li>
+                <li><a href="#bookings" class="nav-link" data-section="bookings">
+                    <i class="fas fa-calendar-check"></i> Bookings
+                </a></li>
+                <li><a href="#students" class="nav-link" data-section="students">
+                    <i class="fas fa-users"></i> Students
+                </a></li>
+            </ul>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title">Management</div>
+            <ul class="sidebar-nav">
+                <li><a href="#classes" class="nav-link" data-section="classes">
+                    <i class="fas fa-swimming"></i> My Classes
+                </a></li>
+                <li><a href="#schedule" class="nav-link" data-section="schedule">
+                    <i class="fas fa-clock"></i> Schedule
+                </a></li>
+                <li><a href="#earnings" class="nav-link" data-section="earnings">
+                    <i class="fas fa-dollar-sign"></i> Earnings
+                </a></li>
+            </ul>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title">Account</div>
+            <ul class="sidebar-nav">
+                <li><a href="#profile" class="nav-link" data-section="profile">
+                    <i class="fas fa-user"></i> Profile
+                </a></li>
+                <li><a href="#settings" class="nav-link" data-section="settings">
+                    <i class="fas fa-cog"></i> Settings
+                </a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="dashboard-container">
+        <!-- OVERVIEW SECTION -->
+        <section id="overview" class="content-section active">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Dashboard Overview</h1>
+                    <p class="page-subtitle">Welcome back, Denis! Here's your performance summary</p>
+                </div>
+                <button class="btn btn-primary"><i class="fas fa-calendar-plus"></i> Add Class</button>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="quick-stats">
+                <div class="stat-box">
+                    <div class="stat-box-value">24</div>
+                    <div class="stat-box-label">Classes This Month</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value">134</div>
+                    <div class="stat-box-label">Total Sessions</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value">4.8★</div>
+                    <div class="stat-box-label">Average Rating</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value">KSh 58K</div>
+                    <div class="stat-box-label">Monthly Earnings</div>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line"></i> Key Metrics
+                    </h2>
+                </div>
+                <div class="grid grid-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Active Students</div>
+                            <div class="card-icon success">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-value">48</div>
+                            <div class="stat-label">+5 this month</div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary);">Growing student base</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Pending Bookings</div>
+                            <div class="card-icon warning">
+                                <i class="fas fa-hourglass-end"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-value">3</div>
+                            <div class="stat-label">Awaiting confirmation</div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary);">Respond within 24h</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Revenue</div>
+                            <div class="card-icon danger">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="stat-value">KSh 58K</div>
+                            <div class="stat-label">March 2024</div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary);">20% increase YoY</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Classes -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-calendar-check"></i> Upcoming Classes
+                    </h2>
+                    <a href="#classes" class="btn btn-secondary btn-small">Manage All</a>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Class Name</th>
+                                <th>Date & Time</th>
+                                <th>Students</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Freestyle Beginner</td>
+                                <td>Mon, Mar 24 @ 10:00 AM</td>
+                                <td><span class="badge badge-success">5/6</span></td>
+                                <td><span class="badge badge-success">Confirmed</span></td>
+                                <td><button class="btn btn-secondary btn-small">View</button></td>
+                            </tr>
+                            <tr>
+                                <td>Backstroke Advanced</td>
+                                <td>Wed, Mar 26 @ 2:30 PM</td>
+                                <td><span class="badge badge-warning">3/6</span></td>
+                                <td><span class="badge badge-warning">Pending</span></td>
+                                <td><button class="btn btn-secondary btn-small">View</button></td>
+                            </tr>
+                            <tr>
+                                <td>Butterfly Power</td>
+                                <td>Fri, Mar 28 @ 4:00 PM</td>
+                                <td><span class="badge badge-danger">6/6</span></td>
+                                <td><span class="badge badge-success">Confirmed</span></td>
+                                <td><button class="btn btn-secondary btn-small">View</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Bookings -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-history"></i> Recent Bookings
+                    </h2>
+                    <a href="#bookings" class="btn btn-secondary btn-small">View All</a>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Class</th>
+                                <th>Date</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="student-name">
+                                        <div class="student-avatar">J</div>
+                                        <span>John Kipchoge</span>
+                                    </div>
+                                </td>
+                                <td>Freestyle Beginner</td>
+                                <td>Mar 22, 2024</td>
+                                <td>KSh 200</td>
+                                <td><span class="badge badge-success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="student-name">
+                                        <div class="student-avatar">S</div>
+                                        <span>Sarah Kipchoge</span>
+                                    </div>
+                                </td>
+                                <td>Backstroke Advanced</td>
+                                <td>Mar 20, 2024</td>
+                                <td>KSh 500</td>
+                                <td><span class="badge badge-success">Completed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- BOOKINGS SECTION -->
+        <section id="bookings" class="content-section">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Bookings Management</h1>
+                    <p class="page-subtitle">Manage all student bookings and confirmations</p>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active">All ({3})</button>
+                <button class="tab-btn" onclick="filterBookings('pending')">Pending ({1})</button>
+                <button class="tab-btn" onclick="filterBookings('confirmed')">Confirmed ({2})</button>
+                <button class="tab-btn" onclick="filterBookings('cancelled')">Cancelled ({0})</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Class</th>
+                            <th>Class Time</th>
+                            <th>Payment Status</th>
+                            <th>Booking Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="student-name">
+                                    <div class="student-avatar">M</div>
+                                    <span>Mary Njoroge</span>
+                                </div>
+                            </td>
+                            <td>Freestyle Beginner</td>
+                            <td>Mon, Mar 24 @ 10:00 AM</td>
+                            <td><span class="badge badge-success">Paid</span></td>
+                            <td><span class="badge badge-warning">Pending</span></td>
+                            <td>
+                                <button class="btn btn-success btn-small">Confirm</button>
+                                <button class="btn btn-secondary btn-small">Decline</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="student-name">
+                                    <div class="student-avatar">P</div>
+                                    <span>Peter Kiprotich</span>
+                                </div>
+                            </td>
+                            <td>Backstroke Advanced</td>
+                            <td>Wed, Mar 26 @ 2:30 PM</td>
+                            <td><span class="badge badge-success">Paid</span></td>
+                            <td><span class="badge badge-success">Confirmed</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-small">View</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="student-name">
+                                    <div class="student-avatar">A</div>
+                                    <span>Alice Ochieng</span>
+                                </div>
+                            </td>
+                            <td>Butterfly Power</td>
+                            <td>Fri, Mar 28 @ 4:00 PM</td>
+                            <td><span class="badge badge-success">Paid</span></td>
+                            <td><span class="badge badge-success">Confirmed</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-small">View</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- STUDENTS SECTION -->
+        <section id="students" class="content-section">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">My Students</h1>
+                    <p class="page-subtitle">Manage and track student progress</p>
+                </div>
+                <button class="btn btn-primary"><i class="fas fa-download"></i> Export</button>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">John Kipchoge</div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Member since Jan 2024</p>
+                        </div>
+                        <div class="card-icon success">
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div style="margin: 12px 0;">
+                            <div style="font-size: 0.9rem; font-weight: 500; margin-bottom: 4px;">Classes: 12</div>
+                            <div style="font-size: 0.9rem; font-weight: 500; margin-bottom: 4px;">Rating: 5/5</div>
+                            <div style="font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);">Total Spent: KSh 2,400</div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-secondary btn-small">View Profile</button>
+                        <button class="btn btn-secondary btn-small">Message</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Sarah Kipchoge</div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Member since Feb 2024</p>
+                        </div>
+                        <div class="card-icon success">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div style="margin: 12px 0;">
+                            <div style="font-size: 0.9rem; font-weight: 500; margin-bottom: 4px;">Classes: 8</div>
+                            <div style="font-size: 0.9rem; font-weight: 500; margin-bottom: 4px;">Rating: 4/5</div>
+                            <div style="font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);">Total Spent: KSh 1,600</div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-secondary btn-small">View Profile</button>
+                        <button class="btn btn-secondary btn-small">Message</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Peter Kiprotich</div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Member since Mar 2024</p>
+                        </div>
+                        <div class="card-icon warning">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div style="margin: 12px 0;">
+                            <div style="font-size: 0.9rem; font-weight: 500; margin-bottom: 4px;">Classes: 3</div>
+                            <div style="font-size: 0.9rem; font-weight: 500; margin-bottom: 4px;">Rating: 3/5</div>
+                            <div style="font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);">Total Spent: KSh 600</div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-secondary btn-small">View Profile</button>
+                        <button class="btn btn-secondary btn-small">Message</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- EARNINGS SECTION -->
+        <section id="earnings" class="content-section">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Earnings</h1>
+                    <p class="page-subtitle">Track your income and payouts</p>
+                </div>
+                <button class="btn btn-primary"><i class="fas fa-download"></i> Download Statement</button>
+            </div>
+
+            <div class="grid grid-3">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">March Revenue</div>
+                        <div class="card-icon danger">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="stat-value">KSh 58,000</div>
+                        <div class="stat-label">12 classes</div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px;">↑ 20% increase from Feb</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Pending Payout</div>
+                        <div class="card-icon warning">
+                            <i class="fas fa-hourglass-end"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="stat-value">KSh 12,500</div>
+                        <div class="stat-label">Processing</div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px;">Paid on 5th of month</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">YTD Total</div>
+                        <div class="card-icon success">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="stat-value">KSh 156,000</div>
+                        <div class="stat-label">Jan - Mar 2024</div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px;">36 total classes</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-receipt"></i> Recent Transactions
+                    </h2>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Classes</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Mar 15, 2024</td>
+                                <td>Freestyle Classes</td>
+                                <td>4</td>
+                                <td>KSh 4,000</td>
+                                <td><span class="badge badge-success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>Mar 08, 2024</td>
+                                <td>Backstroke Classes</td>
+                                <td>3</td>
+                                <td>KSh 3,000</td>
+                                <td><span class="badge badge-success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>Mar 01, 2024</td>
+                                <td>February Payout</td>
+                                <td>-</td>
+                                <td>KSh 48,000</td>
+                                <td><span class="badge badge-success">Paid</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Navigation
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.content-section');
+        const sidebar = document.getElementById('sidebar');
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = link.dataset.section;
+                
+                // Hide all sections
+                sections.forEach(s => s.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+                
+                // Update active nav link
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                // Close sidebar on mobile
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.add('closed');
+                }
+            });
+        });
+
+        // Hamburger menu
+        hamburgerBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('closed');
+        });
+
+        // Dark mode toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('swimpro-admin-theme');
+        
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            themeToggle.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            localStorage.setItem('swimpro-admin-theme', isDark ? 'dark' : 'light');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(e.target) && 
+                !hamburgerBtn.contains(e.target)) {
+                sidebar.classList.add('closed');
+            }
+        });
+
+        function filterBookings(status) {
+            console.log('Filtering bookings by:', status);
+        }
+    </script>
+</body>
+</html>

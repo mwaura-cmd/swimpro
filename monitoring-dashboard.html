@@ -1403,7 +1403,12 @@
         });
 
         function updateUserProfile(user) {
-            const userName = user.name || 'Admin';
+            // Extract name from email if not provided
+            let userName = user.name;
+            if (!userName || userName === 'Admin') {
+                const emailParts = (user.email || 'user').split('@')[0];
+                userName = emailParts.charAt(0).toUpperCase() + emailParts.slice(1);
+            }
             const firstLetter = userName.charAt(0).toUpperCase();
             
             document.getElementById('userName').textContent = userName;

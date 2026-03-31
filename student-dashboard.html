@@ -1195,8 +1195,9 @@
                                     <input type="text" id="bookingClassName" readonly style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
                                 </div>
                                 <div>
-                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Class Date</label>
-                                    <input type="date" id="bookingClassDate" required style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
+                                    <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Class Date & Time</label>
+                                    <input type="datetime-local" id="bookingClassDate" required style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit;">
+                                    <small style="display: block; margin-top: 4px; color: var(--text-secondary);">Select your preferred class time</small>
                                 </div>
                                 <div>
                                     <label style="display: block; margin-bottom: 6px; color: var(--text-primary); font-weight: 500;">Student Name</label>
@@ -1340,7 +1341,12 @@
         });
 
         function updateUserProfile(user) {
-            const userName = user.name || 'Student';
+            // Extract name from email if not provided
+            let userName = user.name;
+            if (!userName || userName === 'Student') {
+                const emailParts = (user.email || 'user').split('@')[0];
+                userName = emailParts.charAt(0).toUpperCase() + emailParts.slice(1);
+            }
             const firstLetter = userName.charAt(0).toUpperCase();
             
             document.getElementById('userName').textContent = userName;
@@ -1352,7 +1358,7 @@
         async function loadClasses() {
             try {
                 const supabase = getSupabaseClient();
-                const { data, error } = await supabase.from('classes').select('*');
+                const { data, error } = await supabase.from('classes').select('*').order('created_at', { ascending: false });
                 
                 if (error) {
                     console.error('Error loading classes:', error);
@@ -1362,21 +1368,38 @@
 
                 const classes = data || [];
                 if (classes.length === 0) {
-                    document.getElementById('classes-container').innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1;">No classes available yet</p>';
+                    document.getElementById('classes-container').innerHTML = '<p style="color: var(--text-secondary); grid-column: 1/-1;">No classes available. Check back soon!</p>';
                     return;
                 }
 
-                const html = classes.map(cls => `
-                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
-                        <h3 style="color: var(--accent-blue); font-size: 1.1rem; margin: 0;">${cls.name || 'Untitled'}</h3>
-                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">${cls.description || 'No description'}</p>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                            <span style="color: var(--text-secondary);"><i class="fas fa-graduation-cap"></i> ${cls.stroke || 'Swimming'}</span>
-                            <span style="color: var(--accent-green); font-weight: 600;">${cls.level || 'All Levels'}</span>
+                const html = classes.map(cls => {
+                    const classDate = cls.schedule_date ? new Date(cls.schedule_date).toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'}) : 'TBD';
+                    const classTime = cls.schedule_time ? cls.schedule_time : 'TBD';
+                    return `
+                        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div style="flex: 1;">
+                                    <h3 style="color: var(--accent-blue); font-size: 1.1rem; margin: 0; font-weight: 600;">${cls.name || 'Untitled'}</h3>
+                                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 4px 0 0 0;">${cls.description || 'Swimming class'}</p>
+                                </div>
+                                <span style="background: var(--accent-green); color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">${cls.level || 'All'}</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); font-size: 0.9rem;">
+                                <div>
+                                    <span style="color: var(--text-secondary); display: block; font-size: 0.8rem; margin-bottom: 2px;">Date & Time</span>
+                                    <span style="color: var(--text-primary); font-weight: 500;"><i class="fas fa-calendar-alt"></i> ${classDate}</span>
+                                    <span style="color: var(--accent-yellow); display: block; margin-top: 2px;"><i class="fas fa-clock"></i> ${classTime}</span>
+                                </div>
+                                <div>
+                                    <span style="color: var(--text-secondary); display: block; font-size: 0.8rem; margin-bottom: 2px;">Details</span>
+                                    <span style="background: var(--accent-purple); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; display: inline-block;">${cls.stroke || 'Swimming'}</span>
+                                    <span style="background: var(--border-color); color: var(--text-secondary); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; display: inline-block; margin-left: 4px;">Max ${cls.max_students || '10'}</span>
+                                </div>
+                            </div>
+                            <button onclick="openBookingModal('${cls.id}', '${(cls.name || 'Class').replace(/'/g, "\\'")}', '${cls.schedule_date ? cls.schedule_date.split('T')[0] : ''}')" style="padding: 11px 16px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; margin-top: auto;">Book Now</button>
                         </div>
-                        <button onclick="openBookingModal('${cls.id}', '${cls.name || 'Class'}')" style="padding: 10px 16px; background: var(--accent-blue); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem;">Book Class</button>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
                 
                 document.getElementById('classes-container').innerHTML = html;
             } catch (err) {
@@ -1429,10 +1452,17 @@
             }
         }
 
-        function openBookingModal(classId, className) {
+        function openBookingModal(classId, className, defaultDate = '') {
+            // Extract name from email if needed
+            let studentName = currentUser?.name;
+            if (!studentName || studentName === 'Student') {
+                const emailParts = (currentUser?.email || 'user').split('@')[0];
+                studentName = emailParts.charAt(0).toUpperCase() + emailParts.slice(1);
+            }
+            
             document.getElementById('bookingClassName').value = className;
-            document.getElementById('bookingClassDate').value = '';
-            document.getElementById('bookingStudentName').value = currentUser?.name || '';
+            document.getElementById('bookingClassDate').value = defaultDate || '';
+            document.getElementById('bookingStudentName').value = studentName || '';
             document.getElementById('bookingStudentEmail').value = currentUser?.email || '';
             document.getElementById('bookingStudentPhone').value = '';
             document.getElementById('bookingMessage').value = '';
