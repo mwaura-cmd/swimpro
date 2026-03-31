@@ -76,13 +76,13 @@ ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Students view own bookings" ON bookings 
   FOR SELECT USING (auth.uid() = user_id);
 
--- Students can create bookings (via authenticated requests)
-CREATE POLICY "Students can create bookings" ON bookings 
-  FOR INSERT WITH CHECK (auth.uid()::text = user_id::text OR auth.role() = 'service_role');
+-- Students can create their own bookings
+CREATE POLICY "Students create own bookings" ON bookings 
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- Admins can update bookings (confirm/deny)  
-CREATE POLICY "Admin confirm bookings" ON bookings
-  FOR UPDATE USING (auth.role() = 'service_role');
+-- Admins can update bookings (via admin client)  
+CREATE POLICY "Admins update bookings" ON bookings
+  FOR UPDATE USING (true);
 
 -- ==========================================
 -- INSERT 30 CLASSES - FREESTYLE

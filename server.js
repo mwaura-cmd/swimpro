@@ -15,13 +15,9 @@ const app = express();
 // ------------ Supabase config ------------
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rvpgoyufmegaqxvlwddi.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDg1NDgyNCwiZXhwIjoyMDkwNDMwODI0fQ.njVEFNR-qfREITiIJvZMvqh-HxJJxxaKM8DRPjXhDV4';
 
-// Standard client for auth & RLS-protected reads
+// Standard client for all operations (RLS enforced on database side)
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Service role client for backend inserts/updates (bypasses RLS)
-const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // JWT verification middleware (verifies Supabase auth token)
 async function verifySupabaseToken(req, res, next) {
@@ -246,8 +242,8 @@ app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), asyn
       status: 'pending'
     };
 
-    // Use admin client to bypass RLS for backend inserts
-    const { data, error } = await supabaseAdmin
+    // Use standard client - RLS policy checks user_id matches auth.uid()
+    const { data, error } = await supabase
       .from('bookings')
       .insert([b])
       .select();
