@@ -31,6 +31,7 @@ async function verifySupabaseToken(req, res, next) {
             return res.status(401).json({ error: 'Unauthorized: Invalid token' });
         }
         req.user = data.user;
+        req.authToken = token;  // Store token for authenticated requests
         next();
     } catch (err) {
         return res.status(401).json({ error: 'Unauthorized: Token verification failed' });
@@ -228,6 +229,27 @@ app.post('/api/paystack/webhook', (req, res) => {
 app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), async (req, res) => {
   try {
     const userId = req.user.id;
+    const token = req.authToken;
+
+    // Create authenticated Supabase client with user's token
+    // This way, when we insert, auth.uid() will resolve to the user's ID
+    const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: false
+      }
+    });
+
+    // Set the session with the user's token so auth.uid() works
+    const { data: sessionData, error: sessError } = await userSupabase.auth.setSession({
+      access_token: token,
+      refresh_token: token
+    });
+
+    if (sessError) {
+      console.error('Session error:', sessError);
+      return res.status(401).json({ error: 'Failed to set session', details: sessError.message });
+    }
+
     const b = {
       user_id: userId,
       class_id: req.body.class_id || null,
@@ -242,16 +264,20 @@ app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), asyn
       status: 'pending'
     };
 
-    // Use standard client - RLS policy checks user_id matches auth.uid()
-    const { data, error } = await supabase
+    console.log('Inserting booking:', b);
+
+    // Use authenticated client - auth.uid() now works because we set the session
+    const { data, error } = await userSupabase
       .from('bookings')
       .insert([b])
       .select();
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('Supabase insert error:', error);
       return res.status(400).json({ error: 'Failed to create booking', details: error.message });
     }
+
+    console.log('Booking created:', data);
 
     // Send email notification (fire-and-forget)
     if (data && data.length > 0) {
