@@ -12,6 +12,52 @@ const crypto = require('crypto');
 
 const app = express();
 
+// Simple pluggable session store: Redis if REDIS_URL provided, otherwise in-memory Map
+let sessionStore = null;
+let redisClient = null;
+if (process.env.REDIS_URL) {
+  try {
+    const IORedis = require('ioredis');
+    redisClient = new IORedis(process.env.REDIS_URL);
+    sessionStore = {
+      async set(key, value, ttlMs) {
+        const payload = JSON.stringify(value);
+        if (ttlMs && ttlMs > 0) {
+          await redisClient.set(key, payload, 'PX', ttlMs);
+        } else {
+          await redisClient.set(key, payload);
+        }
+      },
+      async get(key) {
+        const v = await redisClient.get(key);
+        return v ? JSON.parse(v) : null;
+      },
+      async del(key) {
+        await redisClient.del(key);
+      }
+    };
+    console.log('[SessionStore] Using Redis at', process.env.REDIS_URL);
+  } catch (err) {
+    console.warn('[SessionStore] Failed to initialize Redis, falling back to memory store:', err.message);
+  }
+}
+if (!sessionStore) {
+  const mem = new Map();
+  sessionStore = {
+    async set(key, value, ttlMs) {
+      mem.set(key, { value, expiresAt: ttlMs ? Date.now() + ttlMs : null });
+    },
+    async get(key) {
+      const e = mem.get(key);
+      if (!e) return null;
+      if (e.expiresAt && Date.now() > e.expiresAt) { mem.delete(key); return null; }
+      return e.value;
+    },
+    async del(key) { mem.delete(key); }
+  };
+  console.log('[SessionStore] Using in-memory session store');
+}
+
 // ------------ Supabase config ------------
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rvpgoyufmegaqxvlwddi.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
@@ -21,7 +67,20 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // JWT verification middleware (verifies Supabase auth token)
 async function verifySupabaseToken(req, res, next) {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+  // Accept token from Authorization header or server-side session referenced by cookie `swimpro_sid`
+  let token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token && req.headers.cookie) {
+    const raw = req.headers.cookie.split(';').map(c => c.trim());
+    let sid = null;
+    for (const pair of raw) {
+      const [k, v] = pair.split('=');
+      if (k === 'swimpro_sid') { sid = decodeURIComponent(v); break; }
+    }
+    if (sid) {
+      const sess = await sessionStore.get(`sess:${sid}`);
+      if (sess && sess.access_token) token = sess.access_token;
+    }
+  }
     if (!token) {
         return res.status(401).json({ error: 'Unauthorized: No token' });
     }
@@ -136,6 +195,98 @@ app.use(express.static(__dirname));
 
 // Serve uploads
 app.use('/uploads', express.static(UPLOAD_DIR));
+
+// ----------------- Authentication endpoints (httpOnly cookie flow) -----------------
+// Login: exchanges email/password for Supabase token and sets httpOnly cookie
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+
+    // Call Supabase auth token endpoint
+    const resp = await axios.post(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/token`, {
+      email: email.toLowerCase(),
+      password,
+      grant_type: 'password'
+    }, {
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = resp.data;
+    if (!data || !data.access_token) return res.status(401).json({ error: 'Invalid credentials' });
+
+    // Create a server-side session id and store JWT server-side (Redis or in-memory)
+    const sessionId = crypto.randomUUID();
+    const ttlMs = (data.expires_in || 3600) * 1000;
+    await sessionStore.set(`sess:${sessionId}`, { access_token: data.access_token, user_id: data.user?.id || null }, ttlMs);
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+      maxAge: ttlMs,
+      path: '/'
+    };
+    // Set cookie with session id (not the JWT)
+    res.cookie('swimpro_sid', sessionId, cookieOptions);
+
+    // Return minimal user info (no token)
+    res.json({ user: data.user || null });
+  } catch (err) {
+    console.error('Auth login error', err.response ? err.response.data : err.message);
+    res.status(401).json({ error: 'Login failed', details: err.response ? err.response.data : err.message });
+  }
+});
+
+// Get current user based on swimpro_session cookie
+app.get('/api/auth/me', async (req, res) => {
+  try {
+    // parse cookie
+    let sid = null;
+    if (req.headers.cookie) {
+      const raw = req.headers.cookie.split(';').map(c => c.trim());
+      for (const pair of raw) {
+        const [k, v] = pair.split('=');
+        if (k === 'swimpro_sid') { sid = decodeURIComponent(v); break; }
+      }
+    }
+    if (!sid) return res.status(401).json({ error: 'Not authenticated' });
+
+    const sess = await sessionStore.get(`sess:${sid}`);
+    if (!sess || !sess.access_token) return res.status(401).json({ error: 'Invalid session' });
+
+    const { data, error } = await supabase.auth.getUser(sess.access_token);
+    if (error || !data.user) return res.status(401).json({ error: 'Invalid session' });
+    res.json({ user: data.user });
+  } catch (err) {
+    console.error('Auth me error', err.message);
+    res.status(500).json({ error: 'Failed to verify session' });
+  }
+});
+
+// Logout: clear cookie
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    let sid = null;
+    if (req.headers.cookie) {
+      const raw = req.headers.cookie.split(';').map(c => c.trim());
+      for (const pair of raw) {
+        const [k, v] = pair.split('=');
+        if (k === 'swimpro_sid') { sid = decodeURIComponent(v); break; }
+      }
+    }
+    if (sid) await sessionStore.del(`sess:${sid}`);
+  } catch (e) {
+    console.warn('Logout cleanup failed:', e.message);
+  }
+  res.clearCookie('swimpro_sid');
+  res.json({ ok: true });
+});
+
+// -----------------------------------------------------------------------------------
 
 // ------------ Paystack integration ------------
 

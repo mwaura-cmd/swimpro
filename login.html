@@ -462,12 +462,11 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
         
         // Use a singleton client to avoid multiple GoTrue client instances.
-        let swimproSupabaseClient = null;
         function getSupabase() {
-            if (!swimproSupabaseClient && window.supabase) {
-                swimproSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            if (!window.swimproSupabaseClient && window.supabase) {
+                window.swimproSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
-            return swimproSupabaseClient;
+            return window.swimproSupabaseClient;
         }
 
         async function ensureProfile(supabaseClient, user, preferredType = 'student') {
@@ -652,56 +651,53 @@
             }
 
             try {
-                // Sign in with Supabase Auth
-                const { data: authData, error: loginError } = await supabaseClient.auth.signInWithPassword({
-                    email: email.toLowerCase(),
-                    password: password
+                // Sign in via server to set httpOnly session cookie
+                const resp = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email.toLowerCase(), password })
                 });
 
-                if (loginError) {
-                    // Check if error is due to unconfirmed email
-                    if (loginError.message.includes('Email not confirmed') || loginError.message.includes('email_not_confirmed')) {
-                        showError('Please confirm your email first. Check your inbox for a confirmation link. (You may need to check Spam folder)', 'login');
-                        return;
-                    }
-                    showError('Invalid email or password', 'login');
-                    console.error('Auth login error:', loginError);
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    showError(err.error || 'Invalid email or password', 'login');
+                    console.error('Auth login error:', err);
                     return;
                 }
 
-                if (!authData.user) {
-                    showError('Login failed: No user found', 'login');
+                // Server sets httpOnly cookie. Fetch minimal user info from server.
+                const me = await fetch('/api/auth/me');
+                if (!me.ok) {
+                    showError('Login failed: could not verify session', 'login');
+                    return;
+                }
+                const { user } = await me.json();
+                if (!user) {
+                    showError('Login failed: no user returned', 'login');
                     return;
                 }
 
-                const profile = await ensureProfile(supabaseClient, authData.user, selectedUserType.login);
-
-                // Check user type restrictions
-                if (selectedUserType.login === 'admin' && profile.user_type !== 'admin') {
+                // Ensure profile exists server-side via existing endpoint if needed; locally we'll store minimal user info
+                const profileUserType = selectedUserType.login === 'admin' ? 'admin' : 'student';
+                if (selectedUserType.login === 'admin' && user?.user_metadata?.is_admin !== true && user.email !== ADMIN_EMAIL) {
                     showError('Admin access is restricted to admin accounts only', 'login');
                     return;
                 }
 
-                if (selectedUserType.login === 'student' && profile.user_type !== 'student') {
-                    showError('Student access is restricted to student accounts only', 'login');
-                    return;
-                }
-
-                // Store user data in localStorage
                 const sessionUser = {
-                    id: authData.user.id,
-                    name: profile.name,
-                    email: authData.user.email,
-                    userType: profile.user_type,
+                    id: user.id,
+                    name: user.user_metadata?.name || (user.email && user.email.split('@')[0]) || 'User',
+                    email: user.email,
+                    userType: profileUserType,
                     loginMethod: 'email',
                     loginTime: new Date().toISOString()
                 };
 
+                // Store only non-sensitive user info in localStorage; token remains httpOnly on the cookie
                 localStorage.setItem('swimproUser', JSON.stringify(sessionUser));
-                localStorage.setItem('swimproToken', authData.session?.access_token || 'token_' + Math.random().toString(36).substr(2, 20));
 
                 // Redirect
-                window.location.href = profile.user_type === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
+                window.location.href = sessionUser.userType === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
             } catch (error) {
                 showError('Login failed: ' + error.message, 'login');
                 console.error('Login error:', error);
@@ -805,8 +801,18 @@
                         loginTime: new Date().toISOString()
                     };
 
+                    // Inform server to create httpOnly session cookie for this user
+                    try {
+                        await fetch('/api/auth/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: authData.user.email, password })
+                        });
+                    } catch (e) {
+                        console.warn('Failed to set server session after signup:', e.message);
+                    }
+
                     localStorage.setItem('swimproUser', JSON.stringify(sessionUser));
-                    localStorage.setItem('swimproToken', authData.session.access_token);
                     window.location.href = profile.user_type === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
                     return;
                 }

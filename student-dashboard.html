@@ -1275,7 +1275,10 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
 
         function getSupabaseClient() {
-            return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            if (!window.swimproSupabaseClient && window.supabase) {
+                window.swimproSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+            return window.swimproSupabaseClient;
         }
 
         // ===== AUTHENTICATION CHECK =====
@@ -1300,6 +1303,30 @@
         // Initialize user data on page load
         window.addEventListener('load', async () => {
             currentUser = checkAuthentication();
+            if (!currentUser) {
+                // Try to verify server-side session (httpOnly cookie)
+                try {
+                    const meResp = await fetch('/api/auth/me');
+                    if (meResp.ok) {
+                        const { user } = await meResp.json();
+                        if (user) {
+                            const sessionUser = {
+                                id: user.id,
+                                name: user.user_metadata?.name || (user.email && user.email.split('@')[0]) || 'User',
+                                email: user.email,
+                                userType: 'student',
+                                loginMethod: 'email',
+                                loginTime: new Date().toISOString()
+                            };
+                            localStorage.setItem('swimproUser', JSON.stringify(sessionUser));
+                            currentUser = sessionUser;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Could not verify server session:', e.message);
+                }
+            }
+
             if (currentUser) {
                 updateUserProfile(currentUser);
                 loadClasses();
@@ -1380,15 +1407,8 @@
 
         async function loadBookings() {
             try {
-                const token = localStorage.getItem('swimproToken');
-                if (!token) {
-                    document.getElementById('bookings-container').innerHTML = '<p style="color: var(--text-secondary);">Please login to view bookings</p>';
-                    return;
-                }
-
-                const response = await fetch('/api/bookings/my', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                // Server-side session cookie will be sent automatically; no token needed in JS
+                const response = await fetch('/api/bookings/my');
 
                 if (!response.ok) {
                     throw new Error(`API error: ${response.status}`);
@@ -1424,26 +1444,13 @@
 
         async function loadPayments() {
             try {
-                const token = localStorage.getItem('swimproToken');
-                if (!token) {
+                // Fetch bookings/payments from server (cookie-based auth)
+                const resp = await fetch('/api/bookings/my');
+                if (!resp.ok) {
                     document.getElementById('payments-container').innerHTML = '<p style="color: var(--text-secondary);">Please login to view payments</p>';
                     return;
                 }
-
-                const supabase = getSupabaseClient();
-                const { data: bookings, error } = await supabase
-                    .from('bookings')
-                    .select('id, class_id, booking_date, status, classes(pricing_daily_student, pricing_monthly_student)')
-                    .eq('user_id', currentUser?.id)
-                    .order('booking_date', { ascending: false });
-
-                if (error) {
-                    console.error('Error loading payments:', error);
-                    document.getElementById('payments-container').innerHTML = '<p style="color: var(--accent-red);">Error loading payments</p>';
-                    return;
-                }
-
-                const bookingList = bookings || [];
+                const bookingList = await resp.json();
                 if (bookingList.length === 0) {
                     document.getElementById('payments-container').innerHTML = '<p style="color: var(--text-secondary);">No bookings/payments yet</p>';
                     return;
@@ -1491,8 +1498,8 @@
 
         async function loadProfile() {
             try {
-                const token = localStorage.getItem('swimproToken');
-                if (!token) {
+                // profile displayed from currentUser (populated on load)
+                if (!currentUser) {
                     document.getElementById('profile-container').innerHTML = '<p style="color: var(--text-secondary);">Please login to view profile</p>';
                     return;
                 }
@@ -1556,27 +1563,13 @@
 
         async function loadCertificates() {
             try {
-                const token = localStorage.getItem('swimproToken');
-                if (!token) {
+                const resp = await fetch('/api/bookings/my');
+                if (!resp.ok) {
                     document.getElementById('certificates-container').innerHTML = '<p style="color: var(--text-secondary);">Please login to view certificates</p>';
                     return;
                 }
-
-                const supabase = getSupabaseClient();
-                const { data: bookings, error } = await supabase
-                    .from('bookings')
-                    .select('id, class_id, booking_date, status, classes(stroke, level)')
-                    .eq('user_id', currentUser?.id)
-                    .eq('status', 'confirmed')
-                    .order('booking_date', { ascending: false });
-
-                if (error) {
-                    console.error('Error loading certificates:', error);
-                    document.getElementById('certificates-container').innerHTML = '<p style="color: var(--accent-red);">Error loading certificates</p>';
-                    return;
-                }
-
-                const confirmedBookings = bookings || [];
+                const allBookings = await resp.json();
+                const confirmedBookings = (allBookings || []).filter(b => b.status === 'confirmed');
                 const uniqueStrokes = new Set(confirmedBookings.map(b => b.classes?.stroke).filter(Boolean));
                 const certificates = [];
 
@@ -1616,26 +1609,12 @@
 
         async function loadProgress() {
             try {
-                const token = localStorage.getItem('swimproToken');
-                if (!token) {
+                const resp = await fetch('/api/bookings/my');
+                if (!resp.ok) {
                     document.getElementById('progress-container').innerHTML = '<p style="color: var(--text-secondary);">Please login to view progress</p>';
                     return;
                 }
-
-                const supabase = getSupabaseClient();
-                const { data: bookings, error } = await supabase
-                    .from('bookings')
-                    .select('id, class_id, classes(stroke)')
-                    .eq('user_id', currentUser?.id)
-                    .eq('status', 'confirmed');
-
-                if (error) {
-                    console.error('Error loading progress:', error);
-                    document.getElementById('progress-container').innerHTML = '<p style="color: var(--accent-red);">Error loading progress</p>';
-                    return;
-                }
-
-                const confirmedBookings = bookings || [];
+                const confirmedBookings = (await resp.json()).filter(b => b.status === 'confirmed');
                 const strokeCounts = {};
                 const strokes = ['Freestyle', 'Backstroke', 'Breaststroke', 'Butterfly', 'Water Treading'];
 
@@ -1672,7 +1651,62 @@
             }
         }
 
-        // Enhanced dashboard renderer: upcoming classes with attendee counts and subscription-based streak
+        // Streak helpers (same as src/utils/streak.js) - pure functions
+        function weekKeyFromDate(d) {
+            const date = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const day = (date.getDay() + 6) % 7; // 0 = Monday
+            date.setDate(date.getDate() - day);
+            const y = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${y}-${mm}-${dd}`;
+        }
+
+        function monthKeyFromDate(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        function computeWeeklyStreak(dates, options = {}) {
+            const periodsToCheck = options.periodsToCheck || 12;
+            if (!Array.isArray(dates) || dates.length === 0) return 0;
+
+            const normalized = dates.map(d => typeof d === 'string' ? new Date(d) : new Date(d));
+            const presentWeeks = new Set(normalized.map(d => weekKeyFromDate(d)));
+
+            const now = options.now ? new Date(options.now) : new Date();
+            const currentDay = now.getDay();
+            const daysSinceMonday = (currentDay + 6) % 7;
+            const startOfCurrentWeek = new Date(now);
+            startOfCurrentWeek.setDate(now.getDate() - daysSinceMonday);
+
+            let streak = 0;
+            for (let i = 0; i < periodsToCheck; i++) {
+                const checkMonday = new Date(startOfCurrentWeek);
+                checkMonday.setDate(startOfCurrentWeek.getDate() - i * 7);
+                const key = weekKeyFromDate(checkMonday);
+                if (presentWeeks.has(key)) streak++; else break;
+            }
+            return streak;
+        }
+
+        function computeMonthlyStreak(dates, options = {}) {
+            const periodsToCheck = options.periodsToCheck || 12;
+            if (!Array.isArray(dates) || dates.length === 0) return 0;
+
+            const normalized = dates.map(d => typeof d === 'string' ? new Date(d) : new Date(d));
+            const presentMonths = new Set(normalized.map(d => monthKeyFromDate(d)));
+
+            const now = options.now ? new Date(options.now) : new Date();
+            let streak = 0;
+            for (let i = 0; i < periodsToCheck; i++) {
+                const checkDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const key = monthKeyFromDate(checkDate);
+                if (presentMonths.has(key)) streak++; else break;
+            }
+            return streak;
+        }
+
+        // Enhanced dashboard renderer: upcoming classes with attendee counts (confirmed-only) and consecutive-period streak
         async function renderDashboardOverview() {
             try {
                 if (!currentUser) return;
@@ -1702,28 +1736,40 @@
                     if (list.length === 0) {
                         upcomingContainer.innerHTML = '<p style="color: var(--text-secondary);">No upcoming classes. Book a class to get started.</p>';
                     } else {
-                        // Fetch attendee counts in parallel per booking (class_id + booking_date)
-                        const counts = await Promise.all(list.map(async (b) => {
-                            try {
-                                const { data: occ } = await supabase
-                                    .from('bookings')
-                                    .select('id')
-                                    .eq('class_id', b.class_id)
-                                    .eq('booking_date', b.booking_date)
-                                    .in('status', ['pending','confirmed']);
-                                return occ ? occ.length : 0;
-                            } catch (err) {
-                                console.error('attendee count error', err);
-                                return 0;
-                            }
-                        }));
+                        // Build lists of class_ids and booking_dates to fetch confirmed counts in a single query
+                        const classIds = Array.from(new Set(list.map(b => b.class_id).filter(Boolean)));
+                        const dates = Array.from(new Set(list.map(b => b.booking_date).filter(Boolean)));
 
-                        upcomingContainer.innerHTML = list.map((b, idx) => {
+                        let confirmedCountsMap = {}; // key -> "classId|date" => count
+
+                        if (classIds.length > 0 && dates.length > 0) {
+                            try {
+                                // Fetch confirmed bookings for the relevant classes/dates in one query
+                                const { data: confirmedRows, error: cErr } = await supabase
+                                    .from('bookings')
+                                    .select('id, class_id, booking_date')
+                                    .eq('status', 'confirmed')
+                                    .in('class_id', classIds)
+                                    .in('booking_date', dates);
+
+                                if (cErr) throw cErr;
+
+                                (confirmedRows || []).forEach(r => {
+                                    const key = `${r.class_id}|${r.booking_date}`;
+                                    confirmedCountsMap[key] = (confirmedCountsMap[key] || 0) + 1;
+                                });
+                            } catch (err) {
+                                console.error('Error fetching aggregated confirmed counts:', err);
+                            }
+                        }
+
+                        upcomingContainer.innerHTML = list.map((b) => {
                             const d = new Date(b.booking_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                             const time = b.suggested_time || 'TBD';
                             const instructor = b.classes?.instructor || 'Instructor';
                             const capacity = b.classes?.max_students || 8;
-                            const attendees = counts[idx] || 0;
+                            const key = `${b.class_id}|${b.booking_date}`;
+                            const attendees = confirmedCountsMap[key] || 0; // confirmed-only
                             const occupancy = `${attendees}/${capacity} students`;
                             const btn = b.status === 'confirmed' ? '<button class="book-btn">Join Now</button>' : '<button class="book-btn">Manage</button>';
 
@@ -1801,31 +1847,44 @@
                 const upcomingCount = (upcoming && upcoming.length) || 0;
                 document.getElementById('upcomingClassesValue').textContent = upcomingCount;
 
-                // Subscription-aware streak: weekly or monthly based on user subscription
+                // Consecutive-period streak (weeks or months) based on subscription
                 const subRaw = (currentUser.subscription || currentUser.membership || currentUser.membership_type || '').toString().toLowerCase();
                 const now = new Date();
-                let periodStart;
-                let periodLabel = 'Days';
+                const PERIODS_TO_CHECK = 12; // look back up to 12 periods
+
                 if (subRaw.includes('month')) {
-                    periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                    periodLabel = 'this month';
+                    const earliest = new Date(now.getFullYear(), now.getMonth() - (PERIODS_TO_CHECK-1), 1);
+                    const startISO = earliest.toISOString().split('T')[0];
+                    const { data: confirmedRows } = await supabase
+                        .from('bookings')
+                        .select('booking_date')
+                        .eq('user_id', currentUser.id)
+                        .eq('status', 'confirmed')
+                        .gte('booking_date', startISO);
+
+                    const dates = (confirmedRows || []).map(r => r.booking_date);
+                    const streak = computeMonthlyStreak(dates, { now, periodsToCheck: PERIODS_TO_CHECK });
+                    document.getElementById('currentStreakValue').textContent = `${streak} month${streak!==1?'s':''} consecutive`;
                 } else {
-                    // default to weekly
-                    const day = now.getDay(); // 0 Sunday
-                    const diff = (day + 6) % 7; // days since Monday
-                    periodStart = new Date(now);
-                    periodStart.setDate(now.getDate() - diff);
-                    periodLabel = 'this week';
+                    const currentDay = now.getDay();
+                    const daysSinceMonday = (currentDay + 6) % 7;
+                    const startOfCurrentWeek = new Date(now);
+                    startOfCurrentWeek.setDate(now.getDate() - daysSinceMonday);
+                    const earliestWeekStart = new Date(startOfCurrentWeek);
+                    earliestWeekStart.setDate(startOfCurrentWeek.getDate() - (PERIODS_TO_CHECK-1)*7);
+                    const startISO = earliestWeekStart.toISOString().split('T')[0];
+
+                    const { data: confirmedRows } = await supabase
+                        .from('bookings')
+                        .select('booking_date')
+                        .eq('user_id', currentUser.id)
+                        .eq('status', 'confirmed')
+                        .gte('booking_date', startISO);
+
+                    const dates = (confirmedRows || []).map(r => r.booking_date);
+                    const streak = computeWeeklyStreak(dates, { now, periodsToCheck: PERIODS_TO_CHECK });
+                    document.getElementById('currentStreakValue').textContent = `${streak} week${streak!==1?'s':''} consecutive`;
                 }
-                const startISO = periodStart.toISOString().split('T')[0];
-                const { data: periodBookings } = await supabase
-                    .from('bookings')
-                    .select('id')
-                    .eq('user_id', currentUser.id)
-                    .eq('status', 'confirmed')
-                    .gte('booking_date', startISO);
-                const periodCount = (periodBookings && periodBookings.length) || 0;
-                document.getElementById('currentStreakValue').textContent = `${periodCount} ${periodLabel}`;
 
                 // Certificates (recompute)
                 const certCount = attended >= 10 ? 3 : attended >=5 ? 2 : attended >=1 ? 1 : 0;
@@ -1899,10 +1958,7 @@
 
                 const response = await fetch('/api/bookings', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bookingData)
                 });
 
@@ -2002,12 +2058,16 @@
         });
 
         // ===== LOGOUT =====
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('swimproUser');
-                localStorage.removeItem('swimproToken');
-                window.location.href = 'login.html';
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to logout?')) return;
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (e) {
+                console.warn('Logout request failed:', e.message);
             }
+            localStorage.removeItem('swimproUser');
+            localStorage.removeItem('swimproToken');
+            window.location.href = 'login.html';
         });
     </script>
 
