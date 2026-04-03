@@ -217,19 +217,35 @@ async function sendBookingEmail(booking) {
     return;
   }
   const fromAddr = EMAIL_USER || (etherealAccount && etherealAccount.user) || (process.env.MAILTRAP_FROM || 'no-reply@swimpro.test');
+  const bookingDate = booking.booking_date || booking.date || 'TBD';
+  const bookingTime = booking.suggested_time || booking.suggestedTime || 'TBD';
+  const status = booking.status || (booking.paid ? 'confirmed' : 'pending');
   const mailOptions = {
     from: fromAddr,
-    to: EMAIL_TO || fromAddr,
-    subject: `New Booking from ${booking.name}`,
+    to: booking.email || EMAIL_TO || fromAddr,
+    subject: `Booking Received — ${booking.name || 'Guest'}`,
     text: [
-      `Name:     ${booking.name}`,
-      `Email:    ${booking.email}`,
-      `Phone:    ${booking.phone}`,
-      `Category: ${booking.category}`,
-      `Stroke:   ${booking.stroke}`,
-      `Date:     ${booking.date}`,
-      `Message:  ${booking.message || '—'}`,
-      `Booking ID: ${booking.id}`,
+      `Hello ${booking.name || 'there'},`,
+      '',
+      `Thanks — we received your booking request. Here are the details we have:`,
+      `- Booking ID: ${booking.id || 'N/A'}`,
+      `- Status: ${status}`,
+      `- Date: ${bookingDate}`,
+      `- Time: ${bookingTime}`,
+      `- Phone: ${booking.phone || 'N/A'}`,
+      `- Email: ${booking.email || 'N/A'}`,
+      '',
+      `Message:`,
+      `${booking.message || '—'}`,
+      '',
+      `What happens next:`,
+      `- If your booking requires payment, you will receive a payment link shortly.`,
+      `- Once payment or confirmation is completed, we'll update the status and send a confirmation email.`,
+      '',
+      `If any of the above details are incorrect, reply to this email or contact us at ${EMAIL_TO || fromAddr}.`,
+      '',
+      `Thanks for choosing SwimPro!`,
+      `The SwimPro Team`,
     ].join('\n'),
   };
 
