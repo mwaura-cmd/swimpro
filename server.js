@@ -542,6 +542,21 @@ app.post('/api/admin/send-test-email', requireAdminToken, async (req, res) => {
   }
 });
 
+// Admin helper: send a booking-style email (admin only) — useful for testing
+app.post('/api/admin/send-booking', requireAdminToken, async (req, res) => {
+  try {
+    const booking = (req.body && (req.body.booking || req.body)) || null;
+    if (!booking) return res.status(400).json({ error: 'No booking payload provided' });
+    if (!transporter) return res.status(500).json({ error: 'Email transporter not ready' });
+
+    await sendBookingEmail(booking);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Admin] send-booking failed', err && err.message);
+    res.status(500).json({ error: 'Failed to send booking email', detail: err && err.message });
+  }
+});
+
 // Create booking — Supabase-backed with JWT verification
 app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), async (req, res) => {
   try {
