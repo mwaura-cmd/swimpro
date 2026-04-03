@@ -1,0 +1,8 @@
+[Env] dotenv loaded. ADMIN_PASSWORD present: true EMAIL_USER present: true
+[SessionStore] Using in-memory session store
+[Admin] ADMIN_PASSWORD present: true
+Server is running on port 52000
+[Email] Using Ethereal test account cpmdlczxofxjfoq3@ethereal.email
+Paystack webhook event: charge.success id= evt_node_001
+[Webhook] Booking updated for reference: WEBHOOK-TEST-001 bookingId= webhook-test-1
+[Webhook] Duplicate event, skipping: evt_node_001

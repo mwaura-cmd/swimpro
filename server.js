@@ -1,4 +1,5 @@
 require('dotenv').config();
+console.log('[Env] dotenv loaded. ADMIN_PASSWORD present:', !!process.env.ADMIN_PASSWORD, 'EMAIL_USER present:', !!process.env.EMAIL_USER);
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
@@ -103,6 +104,9 @@ const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD
     ? crypto.createHash('sha256').update(process.env.ADMIN_PASSWORD).digest('hex')
     : null;
 
+// Log whether admin password is configured (do NOT log the actual password)
+console.log('[Admin] ADMIN_PASSWORD present:', !!process.env.ADMIN_PASSWORD);
+
 // In-memory session tokens (cleared on server restart — intentional)
 const adminSessions = new Set();
 
@@ -140,22 +144,82 @@ const EMAIL_USER = process.env.EMAIL_USER || '';
 const EMAIL_PASS = process.env.EMAIL_PASS || '';
 const EMAIL_TO   = process.env.EMAIL_TO   || EMAIL_USER; // where admin notifications go
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: EMAIL_USER,
-    pass: EMAIL_PASS,
-  },
-});
+let transporter = null;
+let etherealAccount = null;
 
-async function sendBookingEmail(booking) {
-  if (!EMAIL_USER || !EMAIL_PASS) {
-    console.warn('[Email] EMAIL_USER or EMAIL_PASS not set — skipping email.');
+async function initEmailTransport() {
+  // Prefer Mailtrap if explicitly configured or MAILTRAP creds present
+  const useMailtrap = (process.env.EMAIL_PROVIDER === 'mailtrap') || (process.env.MAILTRAP_USER && process.env.MAILTRAP_PASS);
+  const useEthereal = (process.env.EMAIL_PROVIDER === 'ethereal') || (!(EMAIL_USER && EMAIL_PASS) && !useMailtrap);
+
+  if (useMailtrap) {
+    try {
+      transporter = nodemailer.createTransport({
+        host: process.env.MAILTRAP_HOST || 'smtp.mailtrap.io',
+        port: parseInt(process.env.MAILTRAP_PORT || '2525', 10),
+        secure: false,
+        auth: {
+          user: process.env.MAILTRAP_USER,
+          pass: process.env.MAILTRAP_PASS,
+        },
+      });
+      console.log('[Email] Using Mailtrap SMTP', process.env.MAILTRAP_USER ? '(user provided)' : '');
+    } catch (err) {
+      console.error('[Email] Failed to initialize Mailtrap transporter', err && err.message);
+    }
     return;
   }
+
+  if (useEthereal) {
+    try {
+      etherealAccount = await nodemailer.createTestAccount();
+      transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: etherealAccount.user,
+          pass: etherealAccount.pass,
+        },
+      });
+      console.log('[Email] Using Ethereal test account', etherealAccount.user);
+    } catch (err) {
+      console.error('[Email] Failed to create Ethereal account', err && err.message);
+    }
+    return;
+  }
+
+  // Fallback: configured SMTP via EMAIL_USER/EMAIL_PASS (e.g., Gmail with app password)
+  try {
+    if (EMAIL_USER && EMAIL_PASS) {
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: EMAIL_USER,
+          pass: EMAIL_PASS,
+        },
+      });
+      console.log('[Email] Using SMTP provider configured via EMAIL_USER');
+    } else {
+      console.warn('[Email] No SMTP credentials found; email sending disabled until configured');
+    }
+  } catch (err) {
+    console.error('[Email] Failed to initialize SMTP transporter', err && err.message);
+  }
+}
+
+// Initialize transporter asynchronously but don't block server start
+initEmailTransport().catch(err => console.error('[Email] init error', err));
+
+async function sendBookingEmail(booking) {
+  if (!transporter) {
+    console.warn('[Email] transporter not ready — skipping email.');
+    return;
+  }
+  const fromAddr = EMAIL_USER || (etherealAccount && etherealAccount.user) || (process.env.MAILTRAP_FROM || 'no-reply@swimpro.test');
   const mailOptions = {
-    from: EMAIL_USER,
-    to: EMAIL_TO,
+    from: fromAddr,
+    to: EMAIL_TO || fromAddr,
     subject: `New Booking from ${booking.name}`,
     text: [
       `Name:     ${booking.name}`,
@@ -171,9 +235,10 @@ async function sendBookingEmail(booking) {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('[Email] Booking notification sent successfully:', info.messageId);
+    const preview = nodemailer.getTestMessageUrl(info) || null;
+    console.log('[Email] Booking notification sent successfully:', info.messageId, preview ? `preview=${preview}` : '');
   } catch (err) {
-    console.error('[Email] Failed to send booking notification:', err.message);
+    console.error('[Email] Failed to send booking notification:', err && err.message);
   }
 }
 
@@ -428,6 +493,36 @@ app.post('/api/admin/clear-webhook/:id', requireAdminToken, async (req, res) => 
   } catch (err) {
     console.error('[Admin] Failed to clear webhook marker', err.message || err);
     res.status(500).json({ error: 'Failed to clear marker' });
+  }
+});
+
+// Admin helper: send a test email (admin only)
+app.post('/api/admin/send-test-email', requireAdminToken, async (req, res) => {
+  try {
+    const to = (req.body && req.body.to) || EMAIL_TO || EMAIL_USER;
+    if (!to) return res.status(400).json({ error: 'No recipient provided and EMAIL_TO/EMAIL_USER not set' });
+
+    if (!transporter) {
+      console.warn('[Admin] Email transporter not ready — cannot send test email');
+      return res.status(500).json({ error: 'Email not configured on server' });
+    }
+
+    const fromAddr = EMAIL_USER || (etherealAccount && etherealAccount.user) || (process.env.MAILTRAP_FROM || 'no-reply@swimpro.test');
+    const mailOptions = {
+      from: fromAddr,
+      to,
+      subject: 'SwimPro test email',
+      text: 'This is a test email sent from the SwimPro server.'
+    };
+
+    if (!transporter) return res.status(500).json({ error: 'Email transporter not ready' });
+    const info = await transporter.sendMail(mailOptions);
+    const preview = nodemailer.getTestMessageUrl(info) || null;
+    console.log('[Admin] Test email sent:', info && info.messageId, preview ? `preview=${preview}` : '');
+    res.json({ ok: true, messageId: info && info.messageId, previewUrl: preview });
+  } catch (err) {
+    console.error('[Admin] send-test-email failed', err && err.message);
+    res.status(500).json({ error: 'Failed to send test email', detail: err && err.message });
   }
 });
 
