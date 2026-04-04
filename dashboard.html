@@ -463,6 +463,37 @@
             display: block;
         }
 
+        .content-section {
+            display: none;
+            will-change: opacity, transform;
+            transform-origin: top center;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .ui-fade-in {
+            animation: smoothFadeIn 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes smoothFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.995);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ui-fade-in {
+                animation: none;
+            }
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 1200px) {
             :root {
@@ -1344,14 +1375,26 @@
         const sidebar = document.getElementById('sidebar');
         const hamburgerBtn = document.getElementById('hamburgerBtn');
 
+        function animateSectionIn(element) {
+            if (!element) return;
+            element.classList.remove('ui-fade-in');
+            void element.offsetWidth;
+            element.classList.add('ui-fade-in');
+        }
+
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const sectionId = link.dataset.section;
                 
                 // Hide all sections
-                sections.forEach(s => s.classList.remove('active'));
-                document.getElementById(sectionId).classList.add('active');
+                sections.forEach(s => {
+                    s.classList.remove('active');
+                    s.classList.remove('ui-fade-in');
+                });
+                const activeSection = document.getElementById(sectionId);
+                activeSection.classList.add('active');
+                animateSectionIn(activeSection);
                 
                 // Update active nav link
                 navLinks.forEach(l => l.classList.remove('active'));
@@ -1396,6 +1439,7 @@
 
         // Add first section as active on load
         document.querySelector('.nav-link').classList.add('active');
+        animateSectionIn(document.querySelector('.content-section.active'));
     </script>
 </body>
 </html>

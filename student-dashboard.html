@@ -797,6 +797,32 @@
             color: var(--accent-blue);
             border-bottom-color: var(--accent-blue);
         }
+
+        .view-section {
+            will-change: opacity, transform;
+            transform-origin: top center;
+        }
+
+        .ui-fade-in {
+            animation: smoothFadeIn 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes smoothFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.995);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ui-fade-in {
+                animation: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2010,6 +2036,13 @@
         const navLinks = document.querySelectorAll('.sidebar-nav-link');
         const viewSections = document.querySelectorAll('.view-section');
 
+        function animateSectionIn(element) {
+            if (!element) return;
+            element.classList.remove('ui-fade-in');
+            void element.offsetWidth;
+            element.classList.add('ui-fade-in');
+        }
+
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -2018,8 +2051,13 @@
                 navLinks.forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
 
-                viewSections.forEach(v => v.style.display = 'none');
-                document.getElementById(`${section}-view`).style.display = 'block';
+                viewSections.forEach(v => {
+                    v.style.display = 'none';
+                    v.classList.remove('ui-fade-in');
+                });
+                const activeView = document.getElementById(`${section}-view`);
+                activeView.style.display = 'block';
+                animateSectionIn(activeView);
 
                 const titles = {
                     dashboard: 'Dashboard',
@@ -2046,6 +2084,9 @@
                 }
             });
         });
+
+        const initialView = document.querySelector('.view-section:not([style*="display: none"])') || document.querySelector('.view-section');
+        animateSectionIn(initialView);
 
         // ===== THEME TOGGLE =====
         document.querySelector('[title="Theme"]').addEventListener('click', function() {

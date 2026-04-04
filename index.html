@@ -843,6 +843,33 @@
             border-bottom-color: var(--accent-blue);
         }
 
+        .section-view,
+        .pricing-panel {
+            will-change: opacity, transform;
+            transform-origin: top center;
+        }
+
+        .ui-fade-in {
+            animation: smoothFadeIn 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes smoothFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px) scale(0.995);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ui-fade-in {
+                animation: none;
+            }
+        }
+
         @media (max-width: 480px) {
             .tab-btn {
                 padding: 10px 12px;
@@ -1373,7 +1400,7 @@
                         <button class="tab-btn" data-tab="student">🎓 Student Classes</button>
                     </div>
 
-                    <div id="adult-pricing" class="grid-2">
+                    <div id="adult-pricing" class="grid-2 pricing-panel">
                         <div class="pricing-card">
                             <div class="pricing-header">
                                 <div class="pricing-title">Single Class</div>
@@ -1435,7 +1462,7 @@
                         </div>
                     </div>
 
-                    <div id="student-pricing" class="grid-2" style="display: none;">
+                    <div id="student-pricing" class="grid-2 pricing-panel" style="display: none;">
                         <div class="pricing-card">
                             <div class="pricing-header">
                                 <div class="pricing-title">Single Class</div>
@@ -1777,6 +1804,13 @@
         const navLinks = document.querySelectorAll('.sidebar-nav-link');
         const sections = document.querySelectorAll('.section-view');
 
+        function animateSectionIn(element) {
+            if (!element) return;
+            element.classList.remove('ui-fade-in');
+            void element.offsetWidth;
+            element.classList.add('ui-fade-in');
+        }
+
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1786,7 +1820,9 @@
                 link.classList.add('active');
 
                 sections.forEach(s => s.style.display = 'none');
-                document.getElementById(`${section}-section`).style.display = 'block';
+                const activeSection = document.getElementById(`${section}-section`);
+                activeSection.style.display = 'block';
+                animateSectionIn(activeSection);
 
                 const titles = {
                     home: 'Master the Art of Swimming',
@@ -1809,13 +1845,18 @@
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
+                e.currentTarget.classList.add('active');
 
-                const tab = e.target.dataset.tab;
+                const tab = e.currentTarget.dataset.tab;
                 document.querySelectorAll('[id$="-pricing"]').forEach(p => p.style.display = 'none');
-                document.getElementById(`${tab}-pricing`).style.display = 'grid';
+                const activePanel = document.getElementById(`${tab}-pricing`);
+                activePanel.style.display = 'grid';
+                animateSectionIn(activePanel);
             });
         });
+
+        const initialSection = document.querySelector('.section-view:not([style*="display: none"])') || document.querySelector('.section-view');
+        animateSectionIn(initialSection);
 
         // ===== THEME TOGGLE =====
         document.querySelector('[title="Theme"]').addEventListener('click', function() {
