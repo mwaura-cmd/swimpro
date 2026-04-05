@@ -1,6 +1,13 @@
 const express = require('express');
 const path = require('path');
-const puppeteer = require('puppeteer');
+
+function loadPuppeteer() {
+  try {
+    return require('puppeteer');
+  } catch (err) {
+    throw new Error('Optional dependency "puppeteer" is not installed. Run "npm install --save-dev puppeteer" before using "npm run render:dashboard".');
+  }
+}
 
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -13,6 +20,7 @@ const server = app.listen(PORT, async () => {
 
   let browser;
   try {
+    const puppeteer = loadPuppeteer();
     browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
 
