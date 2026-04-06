@@ -123,6 +123,11 @@ const PAYSTACK_PUBLIC_KEY = process.env.PAYSTACK_PUBLIC_KEY || '';
 app.use(cors());
 app.use(express.json());
 
+// Lightweight liveness endpoint for deploy/health checks
+app.get('/healthz', (req, res) => {
+  res.json({ ok: true, uptime: Math.floor(process.uptime()) });
+});
+
 const DATA_FILE = path.join(__dirname, 'bookings.json');
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);

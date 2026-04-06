@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: swimpro
+    env: node
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUPPETEER_SKIP_DOWNLOAD
+        value: "true"
+      - key: NPM_CONFIG_PUPPETEER_SKIP_DOWNLOAD
+        value: "true"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: EMAIL_PROVIDER
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_TO
+        sync: false
+      - key: MAILTRAP_HOST
+        sync: false
+      - key: MAILTRAP_PORT
+        sync: false
+      - key: MAILTRAP_USER
+        sync: false
+      - key: MAILTRAP_PASS
+        sync: false

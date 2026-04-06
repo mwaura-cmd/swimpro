@@ -39,3 +39,11 @@ curl -X POST -H "Content-Type: application/json" -d '{"phone":"2547XXXXXXXX","am
 ```
 
 8) Watch logs for callback at `/api/mpesa/stk/callback` — the server updates `bookings.json` automatically.
+
+Render deploy notes
+
+- Use `npm install --omit=dev` as the build command to avoid installing test-only dependencies.
+- Ensure service health checks point to `/healthz`.
+- If a deploy ever fails while installing Puppeteer/Chrome, set:
+	- `PUPPETEER_SKIP_DOWNLOAD=true`
+	- `NPM_CONFIG_PUPPETEER_SKIP_DOWNLOAD=true`
