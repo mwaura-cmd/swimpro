@@ -290,10 +290,9 @@ app.post('/api/auth/login', async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
     // Call Supabase auth token endpoint
-    const resp = await axios.post(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/token`, {
+    const resp = await axios.post(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/token?grant_type=password`, {
       email: email.toLowerCase(),
-      password,
-      grant_type: 'password'
+      password
     }, {
       headers: {
         apikey: SUPABASE_ANON_KEY,
@@ -324,11 +323,19 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (err) {
     const upstreamStatus = err && err.response && err.response.status ? err.response.status : 500;
     const upstreamData = err && err.response ? err.response.data : null;
-    const message =
-      (upstreamData && (upstreamData.error_description || upstreamData.error || upstreamData.message)) ||
+    let message =
+      (upstreamData && (upstreamData.error_description || upstreamData.error || upstreamData.message || upstreamData.msg)) ||
       (typeof upstreamData === 'string' ? upstreamData : null) ||
       err.message ||
       'Login failed';
+
+    if (upstreamData && upstreamData.error_code === 'invalid_credentials') {
+      if (String(upstreamData.msg || '').toLowerCase() === 'unsupported_grant_type') {
+        message = 'Login is temporarily unavailable (auth grant configuration). Please try again shortly.';
+      } else {
+        message = 'Invalid email or password';
+      }
+    }
 
     console.error('Auth login error', upstreamData || err.message);
     // Normalize common auth failures to 401 while preserving upstream server statuses when possible.

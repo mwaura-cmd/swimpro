@@ -693,7 +693,7 @@
                 if (!resp.ok) {
                     const err = await resp.json().catch(() => ({}));
                     const detailed = err.details || {};
-                    const message = err.error || detailed.error_description || detailed.error || 'Invalid email or password';
+                    const message = err.error || detailed.error_description || detailed.msg || detailed.error || 'Invalid email or password';
                     showError(message, 'login');
                     console.error('Auth login error:', err);
                     return;
