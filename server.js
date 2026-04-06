@@ -664,6 +664,25 @@ app.get('/api/bookings', requireAdminToken, async (req, res) => {
   }
 });
 
+// List classes for student dashboard
+app.get('/api/classes', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('classes')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return res.status(400).json({ error: 'Failed to fetch classes', details: error.message });
+    }
+
+    res.json(data || []);
+  } catch (err) {
+    console.error('Fetch classes error:', err);
+    res.status(500).json({ error: 'Failed to fetch classes', details: err.message });
+  }
+});
+
 // Confirm/approve booking — admin only — Supabase-backed
 app.put('/api/bookings/:id/confirm', requireAdminToken, async (req, res) => {
   try {
@@ -711,17 +730,46 @@ app.get('/api/bookings/my', verifySupabaseToken, async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const { data, error } = await supabase
+    const joinedQuery = await supabase
       .from('bookings')
-      .select('*')
+      .select('id, user_id, class_id, name, email, phone, booking_date, suggested_time, message, paid, screenshot, status, created_at, confirmed_at, classes(id, name, description, instructor, max_students, stroke, level, pricing_daily_student, pricing_monthly_student, schedule_date, schedule_time)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      return res.status(400).json({ error: 'Failed to fetch bookings', details: error.message });
+    if (joinedQuery.error) {
+      console.warn('Joined booking query failed, falling back to bookings only:', joinedQuery.error.message);
+
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (fallbackError) {
+        return res.status(400).json({ error: 'Failed to fetch bookings', details: fallbackError.message });
+      }
+
+      const classIds = Array.from(new Set((fallbackData || []).map((b) => b.class_id).filter(Boolean)));
+      if (classIds.length > 0) {
+        const { data: classRows, error: classError } = await supabase
+          .from('classes')
+          .select('id, name, description, instructor, max_students, stroke, level, pricing_daily_student, pricing_monthly_student, schedule_date, schedule_time')
+          .in('id', classIds);
+
+        if (!classError && Array.isArray(classRows)) {
+          const classMap = new Map(classRows.map((row) => [row.id, row]));
+          const enriched = (fallbackData || []).map((booking) => ({
+            ...booking,
+            classes: booking.class_id ? (classMap.get(booking.class_id) || null) : null
+          }));
+          return res.json(enriched);
+        }
+      }
+
+      return res.json(fallbackData || []);
     }
 
-    res.json(data || []);
+    res.json(joinedQuery.data || []);
   } catch (err) {
     console.error('Fetch user bookings error:', err);
     res.status(500).json({ error: 'Failed to fetch bookings', details: err.message });
