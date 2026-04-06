@@ -864,6 +864,10 @@
             animation: smoothFadeIn 0.34s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
+        .ui-fade-out {
+            animation: smoothFadeOut 0.2s cubic-bezier(0.4, 0, 1, 1);
+        }
+
         @keyframes smoothFadeIn {
             from {
                 opacity: 0;
@@ -875,8 +879,20 @@
             }
         }
 
+        @keyframes smoothFadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-6px) scale(0.995);
+            }
+        }
+
         @media (prefers-reduced-motion: reduce) {
-            .ui-fade-in {
+            .ui-fade-in,
+            .ui-fade-out {
                 animation: none;
             }
         }
@@ -1582,8 +1598,50 @@
             element.classList.add('ui-fade-in');
         }
 
+        function animateSectionOut(element) {
+            if (!element) return Promise.resolve();
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve();
+            return new Promise(resolve => {
+                let done = false;
+                const finish = () => {
+                    if (done) return;
+                    done = true;
+                    element.classList.remove('ui-fade-out');
+                    resolve();
+                };
+                element.classList.remove('ui-fade-in');
+                void element.offsetWidth;
+                element.classList.add('ui-fade-out');
+                element.addEventListener('animationend', finish, { once: true });
+                setTimeout(finish, 240);
+            });
+        }
+
+        function getVisibleView() {
+            return Array.from(viewSections).find(v => v.style.display !== 'none');
+        }
+
+        let viewTransitionToken = 0;
+
+        async function switchViewSection(nextView) {
+            if (!nextView) return;
+            const currentView = getVisibleView();
+            if (currentView === nextView) return;
+
+            const token = ++viewTransitionToken;
+            await animateSectionOut(currentView);
+            if (token !== viewTransitionToken) return;
+
+            if (currentView) {
+                currentView.style.display = 'none';
+                currentView.classList.remove('ui-fade-in', 'ui-fade-out');
+            }
+            nextView.style.display = 'block';
+            animateSectionIn(nextView);
+        }
+
         navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
+            link.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const section = e.currentTarget.dataset.section;
 
@@ -1592,13 +1650,8 @@
                 link.classList.add('active');
 
                 // Show/hide sections
-                viewSections.forEach(v => {
-                    v.style.display = 'none';
-                    v.classList.remove('ui-fade-in');
-                });
                 const activeView = document.getElementById(`${section}-view`);
-                activeView.style.display = 'block';
-                animateSectionIn(activeView);
+                await switchViewSection(activeView);
 
                 // Update page title
                 const titles = {

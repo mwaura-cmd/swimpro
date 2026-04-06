@@ -853,6 +853,10 @@
             animation: smoothFadeIn 0.34s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
+        .ui-fade-out {
+            animation: smoothFadeOut 0.2s cubic-bezier(0.4, 0, 1, 1);
+        }
+
         @keyframes smoothFadeIn {
             from {
                 opacity: 0;
@@ -864,8 +868,20 @@
             }
         }
 
+        @keyframes smoothFadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-6px) scale(0.995);
+            }
+        }
+
         @media (prefers-reduced-motion: reduce) {
-            .ui-fade-in {
+            .ui-fade-in,
+            .ui-fade-out {
                 animation: none;
             }
         }
@@ -1811,18 +1827,77 @@
             element.classList.add('ui-fade-in');
         }
 
+        function animateSectionOut(element) {
+            if (!element) return Promise.resolve();
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve();
+            return new Promise(resolve => {
+                let done = false;
+                const finish = () => {
+                    if (done) return;
+                    done = true;
+                    element.classList.remove('ui-fade-out');
+                    resolve();
+                };
+                element.classList.remove('ui-fade-in');
+                void element.offsetWidth;
+                element.classList.add('ui-fade-out');
+                element.addEventListener('animationend', finish, { once: true });
+                setTimeout(finish, 240);
+            });
+        }
+
+        function getVisibleElement(elements) {
+            return Array.from(elements).find(el => el.style.display !== 'none');
+        }
+
+        let sectionTransitionToken = 0;
+        let pricingTransitionToken = 0;
+
+        async function switchSection(nextSection) {
+            if (!nextSection) return;
+            const currentSection = getVisibleElement(sections);
+            if (currentSection === nextSection) return;
+
+            const token = ++sectionTransitionToken;
+            await animateSectionOut(currentSection);
+            if (token !== sectionTransitionToken) return;
+
+            if (currentSection) {
+                currentSection.style.display = 'none';
+                currentSection.classList.remove('ui-fade-in', 'ui-fade-out');
+            }
+            nextSection.style.display = 'block';
+            animateSectionIn(nextSection);
+        }
+
+        async function switchPricingPanel(nextPanel) {
+            if (!nextPanel) return;
+            const pricingPanels = document.querySelectorAll('[id$="-pricing"]');
+            const currentPanel = getVisibleElement(pricingPanels);
+            if (currentPanel === nextPanel) return;
+
+            const token = ++pricingTransitionToken;
+            await animateSectionOut(currentPanel);
+            if (token !== pricingTransitionToken) return;
+
+            if (currentPanel) {
+                currentPanel.style.display = 'none';
+                currentPanel.classList.remove('ui-fade-in', 'ui-fade-out');
+            }
+            nextPanel.style.display = 'grid';
+            animateSectionIn(nextPanel);
+        }
+
         navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
+            link.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const section = e.currentTarget.dataset.section;
 
                 navLinks.forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
 
-                sections.forEach(s => s.style.display = 'none');
                 const activeSection = document.getElementById(`${section}-section`);
-                activeSection.style.display = 'block';
-                animateSectionIn(activeSection);
+                await switchSection(activeSection);
 
                 const titles = {
                     home: 'Master the Art of Swimming',
@@ -1843,15 +1918,13 @@
 
         // ===== PRICING TABS =====
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 e.currentTarget.classList.add('active');
 
                 const tab = e.currentTarget.dataset.tab;
-                document.querySelectorAll('[id$="-pricing"]').forEach(p => p.style.display = 'none');
                 const activePanel = document.getElementById(`${tab}-pricing`);
-                activePanel.style.display = 'grid';
-                animateSectionIn(activePanel);
+                await switchPricingPanel(activePanel);
             });
         });
 
