@@ -1408,6 +1408,12 @@
                 window.location.href = 'login.html';
                 return null;
             }
+
+            const adminToken = localStorage.getItem('adminToken');
+            if (!adminToken) {
+                window.location.href = 'login.html';
+                return null;
+            }
             
             const userData = JSON.parse(user);
             if (userData.userType !== 'admin') {

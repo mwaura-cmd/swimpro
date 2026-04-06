@@ -338,10 +338,10 @@
                 </div>
 
                 <div class="user-type-selector">
-                    <button class="user-type-btn active" data-type="student" onclick="selectUserType('student', 'login')">
+                    <button class="user-type-btn active" data-type="student" onclick="selectUserType(event, 'student', 'login')">
                         <i class="fas fa-graduation-cap"></i> Student
                     </button>
-                    <button class="user-type-btn" data-type="admin" onclick="selectUserType('admin', 'login')">
+                    <button class="user-type-btn" data-type="admin" onclick="selectUserType(event, 'admin', 'login')">
                         <i class="fas fa-lock"></i> Admin
                     </button>
                 </div>
@@ -362,7 +362,7 @@
 
                     <div class="form-group">
                         <label class="form-label">Password</label>
-                        <input type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required class="form-input">
+                        <input type="password" placeholder="********" autocomplete="current-password" required class="form-input">
                     </div>
 
                     <button type="submit" class="submit-btn">
@@ -399,10 +399,10 @@
                 </div>
 
                 <div class="user-type-selector">
-                    <button class="user-type-btn active" data-type="student" onclick="selectUserType('student', 'signup')">
+                    <button class="user-type-btn active" data-type="student" onclick="selectUserType(event, 'student', 'signup')">
                         <i class="fas fa-graduation-cap"></i> Student
                     </button>
-                    <button class="user-type-btn" data-type="admin" onclick="selectUserType('admin', 'signup')">
+                    <button class="user-type-btn" data-type="admin" onclick="selectUserType(event, 'admin', 'signup')">
                         <i class="fas fa-lock"></i> Admin
                     </button>
                 </div>
@@ -428,12 +428,12 @@
 
                     <div class="form-group">
                         <label class="form-label">Password</label>
-                        <input type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required class="form-input">
+                        <input type="password" placeholder="********" autocomplete="new-password" required class="form-input">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Confirm Password</label>
-                        <input type="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required class="form-input">
+                        <input type="password" placeholder="********" autocomplete="new-password" required class="form-input">
                     </div>
 
                     <div class="checkbox-group">
@@ -513,20 +513,22 @@
 
         // ===== ADMIN CONFIGURATION =====
         const ADMIN_EMAIL = 'denismwaura548@gmail.com'; // Only email allowed for admin login
-        const ADMIN_PASSWORD = 'admin123'; // Temporary - will be replaced with real backend
 
         let selectedUserType = {
             login: 'student',
             signup: 'student'
         };
 
-        function selectUserType(type, form) {
+        function selectUserType(evt, type, form) {
             selectedUserType[form] = type;
             const formId = form === 'login' ? 'loginForm' : 'signupForm';
             document.querySelectorAll(`#${formId} .user-type-btn`).forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.closest('.user-type-btn').classList.add('active');
+            const targetBtn = evt && evt.target ? evt.target.closest('.user-type-btn') : null;
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
         }
 
         function switchToSignUp() {
@@ -633,16 +635,11 @@
         async function loginWithEmail(event) {
             event.preventDefault();
             hideError('login');
-            
-            const supabaseClient = getSupabase();
-            if (!supabaseClient) {
-                showError('Database connection initializing... please try again', 'login');
-                return;
-            }
 
             const form = event.target;
             const email = form.querySelector('input[type="email"]').value;
             const password = form.querySelector('input[type="password"]').value;
+            const normalizedEmail = (email || '').toLowerCase();
 
             // Validation
             if (!email || !password) {
@@ -651,22 +648,59 @@
             }
 
             try {
+                if (selectedUserType.login === 'admin') {
+                    if (normalizedEmail !== ADMIN_EMAIL.toLowerCase()) {
+                        showError(`Admin login is restricted to ${ADMIN_EMAIL}`, 'login');
+                        return;
+                    }
+
+                    const adminResp = await fetch('/api/admin/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ password })
+                    });
+
+                    const adminData = await adminResp.json().catch(() => ({}));
+                    if (!adminResp.ok || !adminData.token) {
+                        showError(adminData.error || 'Admin login failed', 'login');
+                        console.error('Admin login error:', adminData);
+                        return;
+                    }
+
+                    localStorage.setItem('adminToken', adminData.token);
+                    localStorage.setItem('swimproUser', JSON.stringify({
+                        id: 'admin-local',
+                        name: 'Admin',
+                        email: normalizedEmail,
+                        userType: 'admin',
+                        loginMethod: 'email',
+                        loginTime: new Date().toISOString()
+                    }));
+
+                    window.location.href = 'monitoring-dashboard.html';
+                    return;
+                }
+
                 // Sign in via server to set httpOnly session cookie
                 const resp = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email.toLowerCase(), password })
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ email: normalizedEmail, password })
                 });
 
                 if (!resp.ok) {
                     const err = await resp.json().catch(() => ({}));
-                    showError(err.error || 'Invalid email or password', 'login');
+                    const detailed = err.details || {};
+                    const message = err.error || detailed.error_description || detailed.error || 'Invalid email or password';
+                    showError(message, 'login');
                     console.error('Auth login error:', err);
                     return;
                 }
 
                 // Server sets httpOnly cookie. Fetch minimal user info from server.
-                const me = await fetch('/api/auth/me');
+                const me = await fetch('/api/auth/me', { credentials: 'same-origin' });
                 if (!me.ok) {
                     showError('Login failed: could not verify session', 'login');
                     return;
@@ -677,27 +711,21 @@
                     return;
                 }
 
-                // Ensure profile exists server-side via existing endpoint if needed; locally we'll store minimal user info
-                const profileUserType = selectedUserType.login === 'admin' ? 'admin' : 'student';
-                if (selectedUserType.login === 'admin' && user?.user_metadata?.is_admin !== true && user.email !== ADMIN_EMAIL) {
-                    showError('Admin access is restricted to admin accounts only', 'login');
-                    return;
-                }
-
                 const sessionUser = {
                     id: user.id,
                     name: user.user_metadata?.name || (user.email && user.email.split('@')[0]) || 'User',
                     email: user.email,
-                    userType: profileUserType,
+                    userType: 'student',
                     loginMethod: 'email',
                     loginTime: new Date().toISOString()
                 };
 
                 // Store only non-sensitive user info in localStorage; token remains httpOnly on the cookie
                 localStorage.setItem('swimproUser', JSON.stringify(sessionUser));
+                localStorage.removeItem('adminToken');
 
                 // Redirect
-                window.location.href = sessionUser.userType === 'admin' ? 'monitoring-dashboard.html' : 'student-dashboard.html';
+                window.location.href = 'student-dashboard.html';
             } catch (error) {
                 showError('Login failed: ' + error.message, 'login');
                 console.error('Login error:', error);
@@ -843,11 +871,19 @@
             // Check if user is already logged in
             const user = localStorage.getItem('swimproUser');
             if (user) {
-                const userData = JSON.parse(user);
-                if (userData.userType === 'admin') {
-                    window.location.href = 'monitoring-dashboard.html';
-                } else {
-                    window.location.href = 'student-dashboard.html';
+                try {
+                    const userData = JSON.parse(user);
+                    if (userData.userType === 'admin') {
+                        if (localStorage.getItem('adminToken')) {
+                            window.location.href = 'monitoring-dashboard.html';
+                        } else {
+                            localStorage.removeItem('swimproUser');
+                        }
+                    } else {
+                        window.location.href = 'student-dashboard.html';
+                    }
+                } catch (e) {
+                    localStorage.removeItem('swimproUser');
                 }
             }
         });

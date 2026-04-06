@@ -322,8 +322,18 @@ app.post('/api/auth/login', async (req, res) => {
     // Return minimal user info (no token)
     res.json({ user: data.user || null });
   } catch (err) {
-    console.error('Auth login error', err.response ? err.response.data : err.message);
-    res.status(401).json({ error: 'Login failed', details: err.response ? err.response.data : err.message });
+    const upstreamStatus = err && err.response && err.response.status ? err.response.status : 500;
+    const upstreamData = err && err.response ? err.response.data : null;
+    const message =
+      (upstreamData && (upstreamData.error_description || upstreamData.error || upstreamData.message)) ||
+      (typeof upstreamData === 'string' ? upstreamData : null) ||
+      err.message ||
+      'Login failed';
+
+    console.error('Auth login error', upstreamData || err.message);
+    // Normalize common auth failures to 401 while preserving upstream server statuses when possible.
+    const status = (upstreamStatus === 400 || upstreamStatus === 401) ? 401 : upstreamStatus;
+    res.status(status).json({ error: message, details: upstreamData || err.message });
   }
 });
 
