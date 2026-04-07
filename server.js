@@ -62,9 +62,37 @@ if (!sessionStore) {
 // ------------ Supabase config ------------
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rvpgoyufmegaqxvlwddi.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 // Standard client for all operations (RLS enforced on database side)
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseAdmin = SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    })
+  : null;
+
+if (!supabaseAdmin) {
+  console.warn('[Supabase] SUPABASE_SERVICE_ROLE_KEY missing; admin endpoints may be restricted by RLS');
+}
+
+function getPrivilegedSupabase() {
+  return supabaseAdmin || supabase;
+}
+
+function createUserSupabaseClient(accessToken) {
+  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false
+    }
+  });
+}
 
 // JWT verification middleware (verifies Supabase auth token)
 async function verifySupabaseToken(req, res, next) {
@@ -585,24 +613,8 @@ app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), asyn
     const userId = req.user.id;
     const token = req.authToken;
 
-    // Create authenticated Supabase client with user's token
-    // This way, when we insert, auth.uid() will resolve to the user's ID
-    const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        persistSession: false
-      }
-    });
-
-    // Set the session with the user's token so auth.uid() works
-    const { data: sessionData, error: sessError } = await userSupabase.auth.setSession({
-      access_token: token,
-      refresh_token: token
-    });
-
-    if (sessError) {
-      console.error('Session error:', sessError);
-      return res.status(401).json({ error: 'Failed to set session', details: sessError.message });
-    }
+    // Use a user-scoped client so RLS sees the authenticated user context.
+    const userSupabase = createUserSupabaseClient(token);
 
     const b = {
       user_id: userId,
@@ -620,7 +632,7 @@ app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), asyn
 
     console.log('Inserting booking:', b);
 
-    // Use authenticated client - auth.uid() now works because we set the session
+    // Use authenticated client so RLS resolves auth.uid() to the current user.
     const { data, error } = await userSupabase
       .from('bookings')
       .insert([b])
@@ -648,7 +660,8 @@ app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), asyn
 // List bookings — admin only — Supabase-backed
 app.get('/api/bookings', requireAdminToken, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const db = getPrivilegedSupabase();
+    const { data, error } = await db
       .from('bookings')
       .select('*')
       .order('created_at', { ascending: false });
@@ -688,7 +701,8 @@ app.put('/api/bookings/:id/confirm', requireAdminToken, async (req, res) => {
   try {
     const id = req.params.id;
 
-    const { data, error } = await supabase
+    const db = getPrivilegedSupabase();
+    const { data, error } = await db
       .from('bookings')
       .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
       .eq('id', id)
@@ -729,8 +743,10 @@ app.put('/api/bookings/:id/payref', (req, res) => {
 app.get('/api/bookings/my', verifySupabaseToken, async (req, res) => {
   try {
     const userId = req.user.id;
+    const token = req.authToken;
+    const userSupabase = createUserSupabaseClient(token);
 
-    const joinedQuery = await supabase
+    const joinedQuery = await userSupabase
       .from('bookings')
       .select('id, user_id, class_id, name, email, phone, booking_date, suggested_time, message, paid, screenshot, status, created_at, confirmed_at, classes(id, name, description, instructor, max_students, stroke, level, pricing_daily_student, pricing_monthly_student, schedule_date, schedule_time)')
       .eq('user_id', userId)
@@ -739,7 +755,7 @@ app.get('/api/bookings/my', verifySupabaseToken, async (req, res) => {
     if (joinedQuery.error) {
       console.warn('Joined booking query failed, falling back to bookings only:', joinedQuery.error.message);
 
-      const { data: fallbackData, error: fallbackError } = await supabase
+      const { data: fallbackData, error: fallbackError } = await userSupabase
         .from('bookings')
         .select('*')
         .eq('user_id', userId)
@@ -781,7 +797,8 @@ app.put('/api/bookings/:id/approve', requireAdminToken, async (req, res) => {
   try {
     const id = req.params.id;
 
-    const { data, error } = await supabase
+    const db = getPrivilegedSupabase();
+    const { data, error } = await db
       .from('bookings')
       .update({ status: 'approved', confirmed_at: new Date().toISOString() })
       .eq('id', id)
@@ -803,7 +820,8 @@ app.put('/api/bookings/:id/decline', requireAdminToken, async (req, res) => {
   try {
     const id = req.params.id;
 
-    const { data, error } = await supabase
+    const db = getPrivilegedSupabase();
+    const { data, error } = await db
       .from('bookings')
       .update({ status: 'declined', declined_at: new Date().toISOString() })
       .eq('id', id)
@@ -826,6 +844,7 @@ app.delete('/api/bookings/:id', async (req, res) => {
     const id = req.params.id;
     const authToken = req.headers.authorization?.replace('Bearer ', '');
     const adminToken = req.headers['x-admin-token'] || req.query.adminToken;
+    const isAdmin = !!adminToken && adminSessions.has(adminToken);
 
     // Verify either JWT token (owner) or admin token
     let userId = null;
@@ -836,12 +855,14 @@ app.delete('/api/bookings/:id', async (req, res) => {
       }
     }
 
-    if (!adminToken && !userId) {
+    if (!isAdmin && !userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    const db = isAdmin ? getPrivilegedSupabase() : createUserSupabaseClient(authToken);
+
     // Fetch booking to check ownership
-    const { data: bookingData, error: fetchError } = await supabase
+    const { data: bookingData, error: fetchError } = await db
       .from('bookings')
       .select('user_id')
       .eq('id', id)
@@ -852,12 +873,12 @@ app.delete('/api/bookings/:id', async (req, res) => {
     }
 
     // Check if user is owner or admin
-    if (!adminToken && bookingData.user_id !== userId) {
+    if (!isAdmin && bookingData.user_id !== userId) {
       return res.status(403).json({ error: 'Forbidden: Not your booking' });
     }
 
     // Delete from Supabase
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await db
       .from('bookings')
       .delete()
       .eq('id', id);
