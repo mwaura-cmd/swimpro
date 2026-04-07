@@ -13,50 +13,126 @@ const crypto = require('crypto');
 
 const app = express();
 
-// Simple pluggable session store: Redis if REDIS_URL provided, otherwise in-memory Map
-let sessionStore = null;
-let redisClient = null;
-if (process.env.REDIS_URL) {
-  try {
-    const IORedis = require('ioredis');
-    redisClient = new IORedis(process.env.REDIS_URL);
-    sessionStore = {
-      async set(key, value, ttlMs) {
-        const payload = JSON.stringify(value);
-        if (ttlMs && ttlMs > 0) {
-          await redisClient.set(key, payload, 'PX', ttlMs);
-        } else {
-          await redisClient.set(key, payload);
-        }
-      },
-      async get(key) {
-        const v = await redisClient.get(key);
-        return v ? JSON.parse(v) : null;
-      },
-      async del(key) {
-        await redisClient.del(key);
-      }
-    };
-    console.log('[SessionStore] Using Redis at', process.env.REDIS_URL);
-  } catch (err) {
-    console.warn('[SessionStore] Failed to initialize Redis, falling back to memory store:', err.message);
-  }
-}
-if (!sessionStore) {
+// Simple pluggable session store: prefer Redis when healthy, fall back to in-memory.
+function createInMemorySessionStore() {
   const mem = new Map();
-  sessionStore = {
+  return {
     async set(key, value, ttlMs) {
       mem.set(key, { value, expiresAt: ttlMs ? Date.now() + ttlMs : null });
     },
     async get(key) {
       const e = mem.get(key);
       if (!e) return null;
-      if (e.expiresAt && Date.now() > e.expiresAt) { mem.delete(key); return null; }
+      if (e.expiresAt && Date.now() > e.expiresAt) {
+        mem.delete(key);
+        return null;
+      }
       return e.value;
     },
-    async del(key) { mem.delete(key); }
+    async del(key) {
+      mem.delete(key);
+    }
   };
-  console.log('[SessionStore] Using in-memory session store');
+}
+
+function isPlaceholderRedisUrl(url) {
+  const lower = String(url || '').toLowerCase();
+  return (
+    lower.includes('hostname') ||
+    lower.includes('example') ||
+    lower.includes('your-redis-url') ||
+    lower.includes('<')
+  );
+}
+
+const inMemorySessionStore = createInMemorySessionStore();
+let sessionStore = inMemorySessionStore;
+let redisClient = null;
+const redisUrl = (process.env.REDIS_URL || '').trim();
+
+console.log('[SessionStore] Using in-memory session store');
+
+if (redisUrl) {
+  if (isPlaceholderRedisUrl(redisUrl)) {
+    console.warn('[SessionStore] REDIS_URL appears to be a placeholder; continuing with in-memory session store');
+  } else {
+    try {
+      const IORedis = require('ioredis');
+      redisClient = new IORedis(redisUrl, {
+        lazyConnect: true,
+        maxRetriesPerRequest: 1,
+        enableOfflineQueue: false,
+        retryStrategy: () => null
+      });
+
+      let loggedRedisConnectionError = false;
+      let loggedRedisStoreError = false;
+
+      redisClient.on('error', (err) => {
+        if (!loggedRedisConnectionError) {
+          console.warn('[SessionStore] Redis connection error; continuing with in-memory session store:', err.message);
+          loggedRedisConnectionError = true;
+        }
+      });
+
+      redisClient.connect()
+        .then(() => {
+          sessionStore = {
+            async set(key, value, ttlMs) {
+              await inMemorySessionStore.set(key, value, ttlMs);
+              try {
+                const payload = JSON.stringify(value);
+                if (ttlMs && ttlMs > 0) {
+                  await redisClient.set(key, payload, 'PX', ttlMs);
+                } else {
+                  await redisClient.set(key, payload);
+                }
+              } catch (err) {
+                if (!loggedRedisStoreError) {
+                  console.warn('[SessionStore] Redis write failed; using in-memory session store:', err.message);
+                  loggedRedisStoreError = true;
+                }
+              }
+            },
+            async get(key) {
+              try {
+                const v = await redisClient.get(key);
+                if (v) return JSON.parse(v);
+              } catch (err) {
+                if (!loggedRedisStoreError) {
+                  console.warn('[SessionStore] Redis read failed; using in-memory session store:', err.message);
+                  loggedRedisStoreError = true;
+                }
+              }
+              return inMemorySessionStore.get(key);
+            },
+            async del(key) {
+              await inMemorySessionStore.del(key);
+              try {
+                await redisClient.del(key);
+              } catch (err) {
+                if (!loggedRedisStoreError) {
+                  console.warn('[SessionStore] Redis delete failed; using in-memory session store:', err.message);
+                  loggedRedisStoreError = true;
+                }
+              }
+            }
+          };
+          console.log('[SessionStore] Redis connection established; using Redis session store');
+        })
+        .catch(async (err) => {
+          console.warn('[SessionStore] Failed to connect to Redis; continuing with in-memory session store:', err.message);
+          try {
+            await redisClient.quit();
+          } catch (closeErr) {
+            // ignore cleanup errors
+          }
+          redisClient = null;
+        });
+    } catch (err) {
+      console.warn('[SessionStore] Failed to initialize Redis client; continuing with in-memory session store:', err.message);
+    }
+  }
 }
 
 // ------------ Supabase config ------------
