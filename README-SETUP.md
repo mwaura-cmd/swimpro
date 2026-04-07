@@ -44,6 +44,8 @@ Render deploy notes
 
 - Use `npm install --omit=dev` as the build command to avoid installing test-only dependencies.
 - Ensure service health checks point to `/healthz`.
+- Set `SUPABASE_SERVICE_ROLE_KEY` in Render.
+  - Required for admin booking operations (`/api/bookings`, confirm/approve/decline) and other privileged updates.
 - If a deploy ever fails while installing Puppeteer/Chrome, set:
 	- `PUPPETEER_SKIP_DOWNLOAD=true`
 	- `NPM_CONFIG_PUPPETEER_SKIP_DOWNLOAD=true`

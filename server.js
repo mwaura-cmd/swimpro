@@ -76,8 +76,14 @@ if (!supabaseAdmin) {
   console.warn('[Supabase] SUPABASE_SERVICE_ROLE_KEY missing; admin endpoints may be restricted by RLS');
 }
 
-function getPrivilegedSupabase() {
-  return supabaseAdmin || supabase;
+function requireAdminSupabase(res) {
+  if (!supabaseAdmin) {
+    res.status(503).json({
+      error: 'SUPABASE_SERVICE_ROLE_KEY is required for admin booking operations'
+    });
+    return null;
+  }
+  return supabaseAdmin;
 }
 
 function createUserSupabaseClient(accessToken) {
@@ -660,7 +666,9 @@ app.post('/api/bookings', verifySupabaseToken, upload.single('screenshot'), asyn
 // List bookings — admin only — Supabase-backed
 app.get('/api/bookings', requireAdminToken, async (req, res) => {
   try {
-    const db = getPrivilegedSupabase();
+    const db = requireAdminSupabase(res);
+    if (!db) return;
+
     const { data, error } = await db
       .from('bookings')
       .select('*')
@@ -701,7 +709,9 @@ app.put('/api/bookings/:id/confirm', requireAdminToken, async (req, res) => {
   try {
     const id = req.params.id;
 
-    const db = getPrivilegedSupabase();
+    const db = requireAdminSupabase(res);
+    if (!db) return;
+
     const { data, error } = await db
       .from('bookings')
       .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
@@ -797,7 +807,9 @@ app.put('/api/bookings/:id/approve', requireAdminToken, async (req, res) => {
   try {
     const id = req.params.id;
 
-    const db = getPrivilegedSupabase();
+    const db = requireAdminSupabase(res);
+    if (!db) return;
+
     const { data, error } = await db
       .from('bookings')
       .update({ status: 'approved', confirmed_at: new Date().toISOString() })
@@ -820,7 +832,9 @@ app.put('/api/bookings/:id/decline', requireAdminToken, async (req, res) => {
   try {
     const id = req.params.id;
 
-    const db = getPrivilegedSupabase();
+    const db = requireAdminSupabase(res);
+    if (!db) return;
+
     const { data, error } = await db
       .from('bookings')
       .update({ status: 'declined', declined_at: new Date().toISOString() })
@@ -859,7 +873,8 @@ app.delete('/api/bookings/:id', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const db = isAdmin ? getPrivilegedSupabase() : createUserSupabaseClient(authToken);
+    const db = isAdmin ? requireAdminSupabase(res) : createUserSupabaseClient(authToken);
+    if (!db) return;
 
     // Fetch booking to check ownership
     const { data: bookingData, error: fetchError } = await db
