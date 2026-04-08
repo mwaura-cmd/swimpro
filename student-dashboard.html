@@ -1463,14 +1463,20 @@
                 }
 
                 const bookings = await response.json();
-                if (!Array.isArray(bookings) || bookings.length === 0) {
+                const visibleBookings = (Array.isArray(bookings) ? bookings : []).filter((booking) => {
+                    const status = String(booking.status || '').toLowerCase();
+                    return status !== 'cancelled';
+                });
+
+                if (visibleBookings.length === 0) {
                     document.getElementById('bookings-container').innerHTML = '<p style="color: var(--text-secondary);">No bookings yet. Book a class to get started!</p>';
                     return;
                 }
 
-                const html = bookings.map(booking => {
+                const html = visibleBookings.map(booking => {
                     const bookingStatus = String(booking.status || 'pending').toLowerCase();
                     const isConfirmed = bookingStatus === 'confirmed' || bookingStatus === 'approved';
+                    const isRejected = bookingStatus === 'declined' || bookingStatus === 'cancelled';
 
                     return `
                     <div style="background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
@@ -1482,7 +1488,7 @@
                             </p>
                         </div>
                         <div style="text-align: right;">
-                            <span style="display: inline-block; padding: 6px 12px; background: ${isConfirmed ? 'var(--accent-green)' : bookingStatus === 'declined' ? 'var(--accent-red)' : 'var(--accent-yellow)'}; color: white; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">${isConfirmed ? 'confirmed' : bookingStatus}</span>
+                            <span style="display: inline-block; padding: 6px 12px; background: ${isConfirmed ? 'var(--accent-green)' : isRejected ? 'var(--accent-red)' : 'var(--accent-yellow)'}; color: white; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">${isConfirmed ? 'confirmed' : bookingStatus}</span>
                         </div>
                     </div>
                 `;
@@ -1515,7 +1521,12 @@
                 }
 
                 const deletedCount = Number((payload && payload.deletedCount) || 0);
-                alert(`Cleared ${deletedCount} pending booking${deletedCount === 1 ? '' : 's'}.`);
+                const cancelledCount = Number((payload && payload.cancelledCount) || 0);
+                const clearedCount = deletedCount + cancelledCount;
+                const modeText = payload && payload.resetMode === 'cancel'
+                    ? 'marked as cancelled and hidden'
+                    : 'cleared';
+                alert(`${clearedCount} pending booking${clearedCount === 1 ? '' : 's'} ${modeText}.`);
 
                 await Promise.all([
                     loadBookings(),
@@ -1815,10 +1826,11 @@
                 const today = new Date().toISOString().split('T')[0];
                 const dateOnly = (value) => (value ? String(value).split('T')[0] : '');
                 const statusValue = (b) => String(b.status || '').toLowerCase();
+                const visibleBookings = bookings.filter((b) => statusValue(b) !== 'cancelled');
                 const isActiveStatus = (b) => ['pending', 'confirmed', 'approved'].includes(statusValue(b));
                 const isCompletedStatus = (b) => ['confirmed', 'approved'].includes(statusValue(b));
 
-                const upcoming = bookings
+                const upcoming = visibleBookings
                     .filter((b) => isActiveStatus(b) && dateOnly(b.booking_date) >= today)
                     .sort((a, b) => {
                         const aKey = `${dateOnly(a.booking_date)} ${a.suggested_time || ''}`;
@@ -1869,7 +1881,7 @@
                 }
 
                 // Today's schedule summary for welcome card
-                const todays = bookings
+                const todays = visibleBookings
                     .filter((b) => isActiveStatus(b) && dateOnly(b.booking_date) === today)
                     .sort((a, b) => (a.suggested_time || '').localeCompare(b.suggested_time || ''));
 
@@ -1883,7 +1895,7 @@
                 }
 
                 // Recent activity (last 5 bookings)
-                const recent = [...bookings]
+                const recent = [...visibleBookings]
                     .sort((a, b) => {
                         const aKey = `${dateOnly(a.booking_date)} ${(a.created_at || '')}`;
                         const bKey = `${dateOnly(b.booking_date)} ${(b.created_at || '')}`;
@@ -1917,7 +1929,7 @@
                 }
 
                 // Summary stats
-                const attended = bookings.filter((b) => isCompletedStatus(b)).length;
+                const attended = visibleBookings.filter((b) => isCompletedStatus(b)).length;
                 document.getElementById('classesAttendedValue').textContent = attended;
 
                 const upcomingCount = upcoming.length;
@@ -1927,7 +1939,7 @@
                 const subRaw = (currentUser.subscription || currentUser.membership || currentUser.membership_type || '').toString().toLowerCase();
                 const now = new Date();
                 const PERIODS_TO_CHECK = 12; // look back up to 12 periods
-                const completedDates = bookings
+                const completedDates = visibleBookings
                     .filter((b) => isCompletedStatus(b) && b.booking_date)
                     .map((b) => b.booking_date);
 

@@ -1442,7 +1442,7 @@
 
         function statusBadgeHtml(status) {
             const normalized = normalizeStatus(status);
-            if (normalized === 'declined') {
+            if (normalized === 'declined' || normalized === 'cancelled') {
                 return '<span class="badge danger"><i class="fas fa-times"></i> declined</span>';
             }
             if (isApprovedStatus(normalized)) {

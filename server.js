@@ -967,7 +967,8 @@ app.delete('/api/bookings/my/pending', verifySupabaseToken, async (req, res) => 
       return res.json({
         ok: true,
         deletedCount: Array.isArray(deletedPrivilegedRows) ? deletedPrivilegedRows.length : 0,
-        pendingBefore: pendingCount
+        pendingBefore: pendingCount,
+        resetMode: 'delete'
       });
     }
 
@@ -984,14 +985,34 @@ app.delete('/api/bookings/my/pending', verifySupabaseToken, async (req, res) => 
 
     const deletedCount = Array.isArray(deletedRows) ? deletedRows.length : 0;
     if (deletedCount === 0) {
-      return res.status(503).json({
-        error: 'Could not clear pending bookings automatically. Configure SUPABASE_SERVICE_ROLE_KEY and try again.',
+      // RLS may allow updates but not deletes. Fall back to marking pending rows as cancelled.
+      const { data: cancelledRows, error: cancelError } = await userSupabase
+        .from('bookings')
+        .update({ status: 'cancelled' })
+        .eq('user_id', userId)
+        .eq('status', 'pending')
+        .select('id');
+
+      if (cancelError) {
+        return res.status(503).json({
+          error: 'Could not clear pending bookings automatically. Configure SUPABASE_SERVICE_ROLE_KEY and try again.',
+          details: cancelError.message,
+          pendingBefore: pendingCount,
+          deletedCount: 0,
+          cancelledCount: 0
+        });
+      }
+
+      return res.json({
+        ok: true,
+        deletedCount: 0,
+        cancelledCount: Array.isArray(cancelledRows) ? cancelledRows.length : 0,
         pendingBefore: pendingCount,
-        deletedCount
+        resetMode: 'cancel'
       });
     }
 
-    res.json({ ok: true, deletedCount, pendingBefore: pendingCount });
+    res.json({ ok: true, deletedCount, pendingBefore: pendingCount, resetMode: 'delete' });
   } catch (err) {
     console.error('Clear pending bookings error:', err);
     res.status(500).json({ error: 'Failed to clear pending bookings', details: err.message });
