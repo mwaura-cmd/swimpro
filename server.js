@@ -779,6 +779,39 @@ app.get('/api/bookings', requireAdminToken, async (req, res) => {
   }
 });
 
+// Admin reset helper: clear pending bookings globally or for one user
+app.delete('/api/admin/bookings/pending', requireAdminToken, async (req, res) => {
+  try {
+    const db = requireAdminSupabase(res);
+    if (!db) return;
+
+    const userId = (req.query.user_id || (req.body && req.body.user_id) || '').toString().trim();
+
+    let deleteQuery = db
+      .from('bookings')
+      .delete()
+      .eq('status', 'pending');
+
+    if (userId) {
+      deleteQuery = deleteQuery.eq('user_id', userId);
+    }
+
+    const { data, error } = await deleteQuery.select('id, user_id');
+    if (error) {
+      return res.status(400).json({ error: 'Failed to clear pending bookings', details: error.message });
+    }
+
+    res.json({
+      ok: true,
+      deletedCount: Array.isArray(data) ? data.length : 0,
+      userId: userId || null
+    });
+  } catch (err) {
+    console.error('Admin clear pending bookings error:', err);
+    res.status(500).json({ error: 'Failed to clear pending bookings', details: err.message });
+  }
+});
+
 // List classes for student dashboard
 app.get('/api/classes', async (req, res) => {
   try {
@@ -903,6 +936,41 @@ app.delete('/api/bookings/my/pending', verifySupabaseToken, async (req, res) => 
     const token = req.authToken;
     const userSupabase = createUserSupabaseClient(token);
 
+    const { data: pendingRows, error: pendingError } = await userSupabase
+      .from('bookings')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('status', 'pending');
+
+    if (pendingError) {
+      return res.status(400).json({ error: 'Failed to inspect pending bookings', details: pendingError.message });
+    }
+
+    const pendingCount = Array.isArray(pendingRows) ? pendingRows.length : 0;
+    if (pendingCount === 0) {
+      return res.json({ ok: true, deletedCount: 0, pendingBefore: 0 });
+    }
+
+    // Prefer privileged delete when available to avoid RLS delete-policy limitations.
+    if (supabaseAdmin) {
+      const { data: deletedPrivilegedRows, error: privilegedError } = await supabaseAdmin
+        .from('bookings')
+        .delete()
+        .eq('user_id', userId)
+        .eq('status', 'pending')
+        .select('id');
+
+      if (privilegedError) {
+        return res.status(400).json({ error: 'Failed to clear pending bookings', details: privilegedError.message });
+      }
+
+      return res.json({
+        ok: true,
+        deletedCount: Array.isArray(deletedPrivilegedRows) ? deletedPrivilegedRows.length : 0,
+        pendingBefore: pendingCount
+      });
+    }
+
     const { data: deletedRows, error } = await userSupabase
       .from('bookings')
       .delete()
@@ -914,7 +982,16 @@ app.delete('/api/bookings/my/pending', verifySupabaseToken, async (req, res) => 
       return res.status(400).json({ error: 'Failed to clear pending bookings', details: error.message });
     }
 
-    res.json({ ok: true, deletedCount: Array.isArray(deletedRows) ? deletedRows.length : 0 });
+    const deletedCount = Array.isArray(deletedRows) ? deletedRows.length : 0;
+    if (deletedCount === 0) {
+      return res.status(503).json({
+        error: 'Could not clear pending bookings automatically. Configure SUPABASE_SERVICE_ROLE_KEY and try again.',
+        pendingBefore: pendingCount,
+        deletedCount
+      });
+    }
+
+    res.json({ ok: true, deletedCount, pendingBefore: pendingCount });
   } catch (err) {
     console.error('Clear pending bookings error:', err);
     res.status(500).json({ error: 'Failed to clear pending bookings', details: err.message });
