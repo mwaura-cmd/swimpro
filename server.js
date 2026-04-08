@@ -896,6 +896,31 @@ app.get('/api/bookings/my', verifySupabaseToken, async (req, res) => {
   }
 });
 
+// Clear current user's pending bookings (useful reset action while validating booking flow)
+app.delete('/api/bookings/my/pending', verifySupabaseToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const token = req.authToken;
+    const userSupabase = createUserSupabaseClient(token);
+
+    const { data: deletedRows, error } = await userSupabase
+      .from('bookings')
+      .delete()
+      .eq('user_id', userId)
+      .eq('status', 'pending')
+      .select('id');
+
+    if (error) {
+      return res.status(400).json({ error: 'Failed to clear pending bookings', details: error.message });
+    }
+
+    res.json({ ok: true, deletedCount: Array.isArray(deletedRows) ? deletedRows.length : 0 });
+  } catch (err) {
+    console.error('Clear pending bookings error:', err);
+    res.status(500).json({ error: 'Failed to clear pending bookings', details: err.message });
+  }
+});
+
 // Approve/Confirm booking (admin) — Supabase-backed (alias for /confirm)
 app.put('/api/bookings/:id/approve', requireAdminToken, async (req, res) => {
   try {

@@ -1039,6 +1039,11 @@
                         <div class="card">
                             <div class="card-header">
                                 <h2 class="card-title">My Bookings</h2>
+                                <div class="card-header-right">
+                                    <button id="clearPendingBookingsBtn" style="padding: 8px 12px; background: var(--accent-red); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">
+                                        Clear Pending
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-content">
                                 <div id="bookings-container" style="display: flex; flex-direction: column; gap: 12px;">
@@ -1487,6 +1492,41 @@
             } catch (err) {
                 console.error('Error loading bookings:', err);
                 document.getElementById('bookings-container').innerHTML = '<p style="color: var(--accent-red);">Error loading bookings</p>';
+            }
+        }
+
+        async function clearPendingBookings() {
+            if (!confirm('Clear all bookings that are still pending approval? This cannot be undone.')) return;
+
+            try {
+                const response = await fetch('/api/bookings/my/pending', {
+                    method: 'DELETE'
+                });
+
+                let payload = null;
+                try {
+                    payload = await response.json();
+                } catch (e) {
+                    payload = null;
+                }
+
+                if (!response.ok) {
+                    throw new Error((payload && (payload.error || payload.details)) || `API error: ${response.status}`);
+                }
+
+                const deletedCount = Number((payload && payload.deletedCount) || 0);
+                alert(`Cleared ${deletedCount} pending booking${deletedCount === 1 ? '' : 's'}.`);
+
+                await Promise.all([
+                    loadBookings(),
+                    loadPayments(),
+                    loadCertificates(),
+                    loadProgress(),
+                    renderDashboardOverview()
+                ]);
+            } catch (err) {
+                console.error('Error clearing pending bookings:', err);
+                alert('Failed to clear pending bookings: ' + err.message);
             }
         }
 
@@ -2119,6 +2159,11 @@
 
         const initialView = document.querySelector('.view-section:not([style*="display: none"])') || document.querySelector('.view-section');
         animateSectionIn(initialView);
+
+        const clearPendingBookingsBtn = document.getElementById('clearPendingBookingsBtn');
+        if (clearPendingBookingsBtn) {
+            clearPendingBookingsBtn.addEventListener('click', clearPendingBookings);
+        }
 
         // ===== THEME TOGGLE =====
         document.querySelector('[title="Theme"]').addEventListener('click', function() {
