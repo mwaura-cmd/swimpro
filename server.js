@@ -519,6 +519,24 @@ app.post('/api/admin/login', (req, res) => {
     res.json({ token });
 });
 
+// Admin dashboard status snapshot
+app.get('/api/admin/system-status', requireAdminToken, (req, res) => {
+  const redisStatus = redisClient ? redisClient.status : 'disabled';
+  const sessionStoreMode = redisStatus === 'ready' ? 'redis' : 'in-memory';
+  const inferredEmailProvider = process.env.EMAIL_PROVIDER ||
+    ((process.env.MAILTRAP_USER && process.env.MAILTRAP_PASS) ? 'mailtrap' : (EMAIL_USER && EMAIL_PASS ? 'smtp' : 'none'));
+
+  res.json({
+    checkedAt: new Date().toISOString(),
+    apiUptimeSeconds: Math.floor(process.uptime()),
+    sessionStore: sessionStoreMode,
+    redisStatus,
+    paystackConfigured: !!(PAYSTACK_PUBLIC_KEY && PAYSTACK_SECRET_KEY),
+    emailConfigured: !!transporter,
+    emailProvider: inferredEmailProvider
+  });
+});
+
 // Return public key to the frontend (never expose the secret key)
 app.get('/api/paystack/config', (req, res) => {
   if (!PAYSTACK_PUBLIC_KEY) {

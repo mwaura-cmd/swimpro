@@ -1074,8 +1074,8 @@
                                     System Status
                                 </h2>
                                 <div class="card-header-right">
-                                    <span class="badge success">
-                                        <i class="fas fa-check-circle"></i> All Systems Operational
+                                    <span class="badge success" id="overallSystemBadge">
+                                        <i class="fas fa-sync"></i> Checking systems...
                                     </span>
                                 </div>
                             </div>
@@ -1085,32 +1085,32 @@
                                         <div class="status-indicator online"></div>
                                         <div class="status-info">
                                             <div class="status-name">Class Booking System</div>
-                                            <div class="status-meta">Last checked: 2 min ago</div>
-                                            <div class="status-uptime">99.98% Uptime</div>
+                                            <div class="status-meta" id="statusBookingMeta">Last checked: --</div>
+                                            <div class="status-uptime" id="statusBookingValue">Checking...</div>
                                         </div>
                                     </div>
                                     <div class="status-item">
                                         <div class="status-indicator online"></div>
                                         <div class="status-info">
                                             <div class="status-name">Payment Gateway</div>
-                                            <div class="status-meta">Last checked: 1 min ago</div>
-                                            <div class="status-uptime">100% Uptime</div>
+                                            <div class="status-meta" id="statusPaymentMeta">Last checked: --</div>
+                                            <div class="status-uptime" id="statusPaymentValue">Checking...</div>
                                         </div>
                                     </div>
                                     <div class="status-item">
                                         <div class="status-indicator online"></div>
                                         <div class="status-info">
                                             <div class="status-name">Email Service</div>
-                                            <div class="status-meta">Last checked: 3 min ago</div>
-                                            <div class="status-uptime">99.95% Uptime</div>
+                                            <div class="status-meta" id="statusEmailMeta">Last checked: --</div>
+                                            <div class="status-uptime" id="statusEmailValue">Checking...</div>
                                         </div>
                                     </div>
                                     <div class="status-item">
                                         <div class="status-indicator online"></div>
                                         <div class="status-info">
                                             <div class="status-name">API Server</div>
-                                            <div class="status-meta">Last checked: 1 min ago</div>
-                                            <div class="status-uptime">99.99% Uptime</div>
+                                            <div class="status-meta" id="statusApiMeta">Last checked: --</div>
+                                            <div class="status-uptime" id="statusApiValue">Checking...</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1125,65 +1125,12 @@
                                     Active Classes
                                 </h2>
                                 <div class="card-header-right">
-                                    <span style="font-size: 0.9rem; color: var(--text-secondary);">4 Total Classes</span>
+                                    <span id="activeClassesCountText" style="font-size: 0.9rem; color: var(--text-secondary);">0 Total Classes</span>
                                 </div>
                             </div>
                             <div class="card-content">
-                                <div class="monitor-card">
-                                    <div class="monitor-info">
-                                        <div class="monitor-name">Freestyle Basics — Denis Mwaura</div>
-                                        <div class="monitor-stats">
-                                            <span><i class="fas fa-users"></i> 6/8 students</span>
-                                            <span><i class="fas fa-clock"></i> 10:00 AM - 11:00 AM</span>
-                                            <span><i class="fas fa-crown"></i> Premium</span>
-                                        </div>
-                                    </div>
-                                    <div class="monitor-status">
-                                        <span class="pulse" style="width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; display: inline-block;"></span>
-                                        Live
-                                    </div>
-                                </div>
-                                <div class="monitor-card">
-                                    <div class="monitor-info">
-                                        <div class="monitor-name">Backstroke Advanced — Kennedy Munyua</div>
-                                        <div class="monitor-stats">
-                                            <span><i class="fas fa-users"></i> 5/6 students</span>
-                                            <span><i class="fas fa-clock"></i> 2:00 PM - 3:00 PM</span>
-                                            <span><i class="fas fa-star"></i> Advanced</span>
-                                        </div>
-                                    </div>
-                                    <div class="monitor-status">
-                                        <span class="pulse" style="width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; display: inline-block;"></span>
-                                        Scheduled
-                                    </div>
-                                </div>
-                                <div class="monitor-card">
-                                    <div class="monitor-info">
-                                        <div class="monitor-name">Butterfly Power — Kennedy Munyua</div>
-                                        <div class="monitor-stats">
-                                            <span><i class="fas fa-users"></i> 6/6 students</span>
-                                            <span><i class="fas fa-clock"></i> 4:00 PM - 5:00 PM</span>
-                                            <span><i class="fas fa-fire"></i> Elite</span>
-                                        </div>
-                                    </div>
-                                    <div class="monitor-status down">
-                                        <span style="width: 8px; height: 8px; background: var(--accent-red); border-radius: 50%; display: inline-block; margin-right: 6px;"></span>
-                                        Full
-                                    </div>
-                                </div>
-                                <div class="monitor-card">
-                                    <div class="monitor-info">
-                                        <div class="monitor-name">Swimming Basics — Denis Mwaura</div>
-                                        <div class="monitor-stats">
-                                            <span><i class="fas fa-users"></i> 3/8 students</span>
-                                            <span><i class="fas fa-clock"></i> 5:30 PM - 6:30 PM</span>
-                                            <span><i class="fas fa-graduation-cap"></i> Beginner</span>
-                                        </div>
-                                    </div>
-                                    <div class="monitor-status">
-                                        <span class="pulse" style="width: 8px; height: 8px; background: var(--accent-yellow); border-radius: 50%; display: inline-block;"></span>
-                                        Available
-                                    </div>
+                                <div id="activeClassesContainer">
+                                    <p style="color: var(--text-secondary);">Loading classes...</p>
                                 </div>
                             </div>
                         </div>
@@ -1196,7 +1143,7 @@
                                     Recent Bookings
                                 </h2>
                                 <div class="card-header-right">
-                                    <span class="badge info">12 This Week</span>
+                                    <span class="badge info" id="recentBookingsWeekBadge">0 This Week</span>
                                 </div>
                             </div>
                             <div class="card-content" style="padding: 0;">
@@ -1210,34 +1157,9 @@
                                             <th>Amount</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="recentBookingsBody">
                                         <tr>
-                                            <td>John Kipchoge</td>
-                                            <td>Freestyle Basics</td>
-                                            <td>Mar 30, 10:00 AM</td>
-                                            <td><span class="badge success"><i class="fas fa-check"></i> Confirmed</span></td>
-                                            <td>KSh 200</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Sarah Mutua</td>
-                                            <td>Backstroke Advanced</td>
-                                            <td>Mar 30, 2:00 PM</td>
-                                            <td><span class="badge success"><i class="fas fa-check"></i> Confirmed</span></td>
-                                            <td>KSh 500</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Peter Ochieng</td>
-                                            <td>Butterfly Power</td>
-                                            <td>Mar 30, 4:00 PM</td>
-                                            <td><span class="badge warning"><i class="fas fa-clock"></i> Pending</span></td>
-                                            <td>KSh 500</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Alice Njoroge</td>
-                                            <td>Swimming Basics</td>
-                                            <td>Mar 30, 5:30 PM</td>
-                                            <td><span class="badge success"><i class="fas fa-check"></i> Confirmed</span></td>
-                                            <td>KSh 150</td>
+                                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 20px;">Loading recent bookings...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1340,11 +1262,11 @@
                             </div>
                             <div style="flex: 1;">
                                 <div class="stat-label">Total Members</div>
-                                <div class="stat-value">48</div>
+                                <div class="stat-value" id="totalMembersValue">0</div>
                             </div>
                         </div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i> +5 this month
+                        <div class="stat-change positive" id="totalMembersChange">
+                            <i class="fas fa-users"></i> Based on real bookings
                         </div>
                     </div>
 
@@ -1355,11 +1277,11 @@
                             </div>
                             <div style="flex: 1;">
                                 <div class="stat-label">Bookings Today</div>
-                                <div class="stat-value">12</div>
+                                <div class="stat-value" id="bookingsTodayValue">0</div>
                             </div>
                         </div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i> 2 pending
+                        <div class="stat-change positive" id="bookingsTodayChange">
+                            <i class="fas fa-clock"></i> 0 pending
                         </div>
                     </div>
 
@@ -1370,11 +1292,11 @@
                             </div>
                             <div style="flex: 1;">
                                 <div class="stat-label">Revenue (MTD)</div>
-                                <div class="stat-value">KSh 58K</div>
+                                <div class="stat-value" id="revenueMtdValue">KSh 0</div>
                             </div>
                         </div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-arrow-up"></i> +12% vs last month
+                        <div class="stat-change positive" id="revenueMtdChange">
+                            <i class="fas fa-check-circle"></i> Confirmed bookings only
                         </div>
                     </div>
 
@@ -1385,11 +1307,11 @@
                             </div>
                             <div style="flex: 1;">
                                 <div class="stat-label">System Uptime</div>
-                                <div class="stat-value">99.98%</div>
+                                <div class="stat-value" id="systemUptimeValue">--</div>
                             </div>
                         </div>
-                        <div class="stat-change positive">
-                            <i class="fas fa-check-circle"></i> All Good
+                        <div class="stat-change positive" id="systemUptimeChange">
+                            <i class="fas fa-sync"></i> Checking...
                         </div>
                     </div>
 
@@ -1399,12 +1321,12 @@
                                 <i class="fas fa-star"></i>
                             </div>
                             <div style="flex: 1;">
-                                <div class="stat-label">Avg Rating</div>
-                                <div class="stat-value">4.8/5</div>
+                                <div class="stat-label">Approval Rate</div>
+                                <div class="stat-value" id="approvalRateValue">0%</div>
                             </div>
                         </div>
-                        <div style="font-size: 0.8rem; color: var(--accent-yellow);">
-                            ★★★★★ 128 reviews
+                        <div id="approvalRateMeta" style="font-size: 0.8rem; color: var(--accent-yellow);">
+                            0/0 bookings approved
                         </div>
                     </div>
                 </div>
@@ -1413,11 +1335,11 @@
     </div>
 
     <script>
-        // ===== SUPABASE CONFIG =====
-        const SUPABASE_URL = 'https://rvpgoyufmegaqxvlwddi.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2cGdveXVmbWVnYXF4dmx3ZGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTQ4MjQsImV4cCI6MjA5MDQzMDgyNH0.xM0Xqvy9aX7JFyueg6duGGbsrocf2qgtfvngciYM4nE';
+        // ===== AUTH + LIVE DASHBOARD DATA =====
+        function getAdminToken() {
+            return localStorage.getItem('adminToken') || '';
+        }
 
-        // ===== AUTHENTICATION CHECK =====
         function checkAuthentication() {
             const user = localStorage.getItem('swimproUser');
             if (!user) {
@@ -1425,28 +1347,459 @@
                 return null;
             }
 
-            const adminToken = localStorage.getItem('adminToken');
+            const adminToken = getAdminToken();
             if (!adminToken) {
                 window.location.href = 'login.html';
                 return null;
             }
-            
-            const userData = JSON.parse(user);
+
+            let userData = null;
+            try {
+                userData = JSON.parse(user);
+            } catch (e) {
+                localStorage.removeItem('swimproUser');
+                window.location.href = 'login.html';
+                return null;
+            }
+
             if (userData.userType !== 'admin') {
                 window.location.href = 'login.html';
                 return null;
             }
-            
+
             return userData;
         }
 
         let currentAdmin = null;
+        let dashboardState = {
+            bookings: [],
+            classes: [],
+            classesById: new Map(),
+            health: null,
+            systemStatus: null,
+            paystackConfigured: false,
+            bookingsError: null,
+            checkedAt: null
+        };
+
+        function formatCurrency(amount) {
+            return `KSh ${Math.round(amount || 0).toLocaleString()}`;
+        }
+
+        function toDateOnly(value) {
+            return value ? String(value).split('T')[0] : '';
+        }
+
+        function parseDate(value) {
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function formatDate(value) {
+            const d = parseDate(value);
+            if (!d) return 'N/A';
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatTime(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return 'Time TBD';
+            const normalized = raw.length === 5 ? `${raw}:00` : raw;
+            const d = new Date(`1970-01-01T${normalized}`);
+            if (Number.isNaN(d.getTime())) return raw;
+            return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        }
+
+        function formatDateTime(dateValue, timeValue) {
+            if (!dateValue) return 'N/A';
+            return `${formatDate(dateValue)} ${timeValue ? formatTime(timeValue) : ''}`.trim();
+        }
+
+        function formatDuration(seconds) {
+            const value = Number(seconds || 0);
+            if (!Number.isFinite(value) || value <= 0) return '--';
+            const days = Math.floor(value / 86400);
+            const hours = Math.floor((value % 86400) / 3600);
+            const mins = Math.floor((value % 3600) / 60);
+
+            if (days > 0) return `${days}d ${hours}h`;
+            if (hours > 0) return `${hours}h ${mins}m`;
+            return `${mins}m`;
+        }
+
+        function normalizeStatus(status) {
+            return String(status || 'pending').toLowerCase();
+        }
+
+        function isApprovedStatus(status) {
+            const normalized = normalizeStatus(status);
+            return normalized === 'confirmed' || normalized === 'approved';
+        }
+
+        function isPendingStatus(status) {
+            return normalizeStatus(status) === 'pending';
+        }
+
+        function statusBadgeHtml(status) {
+            const normalized = normalizeStatus(status);
+            if (normalized === 'declined') {
+                return '<span class="badge danger"><i class="fas fa-times"></i> declined</span>';
+            }
+            if (isApprovedStatus(normalized)) {
+                return '<span class="badge success"><i class="fas fa-check"></i> confirmed</span>';
+            }
+            return '<span class="badge warning"><i class="fas fa-clock"></i> pending</span>';
+        }
+
+        function bookingAmount(booking, classInfo) {
+            const amount = Number(
+                (booking && booking.amount) ||
+                (classInfo && (classInfo.pricing_daily_student || classInfo.pricing_monthly_student)) ||
+                0
+            );
+            return Number.isFinite(amount) ? amount : 0;
+        }
+
+        async function fetchJson(url, options = {}) {
+            const response = await fetch(url, options);
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (e) {
+                data = null;
+            }
+
+            if (!response.ok) {
+                const msg = data && (data.error || data.details)
+                    ? `${data.error || 'Request failed'}${data.details ? `: ${data.details}` : ''}`
+                    : `API error: ${response.status}`;
+                const err = new Error(msg);
+                err.status = response.status;
+                err.payload = data;
+                throw err;
+            }
+
+            return data;
+        }
+
+        async function fetchDashboardState() {
+            const adminToken = getAdminToken();
+            if (!adminToken) throw new Error('Not authenticated as admin');
+
+            const headers = { 'x-admin-token': adminToken };
+
+            const [bookingsResult, classesResult, healthResult, systemResult, paystackResult] = await Promise.allSettled([
+                fetchJson('/api/bookings', { headers }),
+                fetchJson('/api/classes'),
+                fetchJson('/healthz'),
+                fetchJson('/api/admin/system-status', { headers }),
+                fetch('/api/paystack/config').then((r) => r.ok)
+            ]);
+
+            const bookings = bookingsResult.status === 'fulfilled' && Array.isArray(bookingsResult.value)
+                ? bookingsResult.value
+                : [];
+            const classes = classesResult.status === 'fulfilled' && Array.isArray(classesResult.value)
+                ? classesResult.value
+                : [];
+            const classesById = new Map(classes.map((c) => [c.id, c]));
+            const health = healthResult.status === 'fulfilled' ? healthResult.value : null;
+            const systemStatus = systemResult.status === 'fulfilled' ? systemResult.value : null;
+            const paystackConfigured = systemStatus
+                ? !!systemStatus.paystackConfigured
+                : (paystackResult.status === 'fulfilled' && paystackResult.value === true);
+
+            return {
+                bookings,
+                classes,
+                classesById,
+                health,
+                systemStatus,
+                paystackConfigured,
+                bookingsError: bookingsResult.status === 'rejected' ? bookingsResult.reason : null,
+                checkedAt: new Date()
+            };
+        }
+
+        function renderSystemStatus(state) {
+            const checkedLabel = state.checkedAt
+                ? `Last checked: ${state.checkedAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+                : 'Last checked: --';
+
+            const bookingOk = !state.bookingsError;
+            const paymentOk = !!state.paystackConfigured;
+            const emailOk = !!(state.systemStatus && state.systemStatus.emailConfigured);
+            const apiOk = !!(state.health && state.health.ok);
+
+            document.getElementById('statusBookingMeta').textContent = checkedLabel;
+            document.getElementById('statusBookingValue').textContent = bookingOk
+                ? `${state.bookings.length} bookings accessible`
+                : 'Unavailable';
+
+            document.getElementById('statusPaymentMeta').textContent = checkedLabel;
+            document.getElementById('statusPaymentValue').textContent = paymentOk
+                ? 'Configured'
+                : 'Missing Paystack keys';
+
+            const emailProvider = state.systemStatus && state.systemStatus.emailProvider
+                ? state.systemStatus.emailProvider
+                : 'not configured';
+            document.getElementById('statusEmailMeta').textContent = checkedLabel;
+            document.getElementById('statusEmailValue').textContent = emailOk
+                ? `Configured (${emailProvider})`
+                : 'Not configured';
+
+            document.getElementById('statusApiMeta').textContent = checkedLabel;
+            document.getElementById('statusApiValue').textContent = apiOk
+                ? `Uptime ${formatDuration(state.health.uptime)}`
+                : 'Unavailable';
+
+            const allOk = bookingOk && paymentOk && emailOk && apiOk;
+            const badge = document.getElementById('overallSystemBadge');
+            badge.className = `badge ${allOk ? 'success' : 'warning'}`;
+            badge.innerHTML = allOk
+                ? '<i class="fas fa-check-circle"></i> All Systems Operational'
+                : '<i class="fas fa-exclamation-triangle"></i> Attention Needed';
+        }
+
+        function renderActiveClasses(state) {
+            const classes = state.classes || [];
+            const bookings = state.bookings || [];
+
+            document.getElementById('activeClassesCountText').textContent = `${classes.length} Total Classes`;
+
+            const container = document.getElementById('activeClassesContainer');
+            if (classes.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary);">No classes found.</p>';
+                return;
+            }
+
+            const activeCountByClass = {};
+            bookings.forEach((booking) => {
+                const status = normalizeStatus(booking.status);
+                if (status === 'declined') return;
+                if (!booking.class_id) return;
+                activeCountByClass[booking.class_id] = (activeCountByClass[booking.class_id] || 0) + 1;
+            });
+
+            const sortedClasses = [...classes]
+                .sort((a, b) => {
+                    const aDate = toDateOnly(a.schedule_date) || '9999-12-31';
+                    const bDate = toDateOnly(b.schedule_date) || '9999-12-31';
+                    if (aDate !== bDate) return aDate.localeCompare(bDate);
+                    return String(a.schedule_time || '').localeCompare(String(b.schedule_time || ''));
+                })
+                .slice(0, 6);
+
+            container.innerHTML = sortedClasses.map((cls) => {
+                const attendees = activeCountByClass[cls.id] || 0;
+                const capacity = Number(cls.max_students || 0);
+                const isFull = capacity > 0 && attendees >= capacity;
+                const isLiveToday = toDateOnly(cls.schedule_date) === toDateOnly(new Date().toISOString());
+
+                let statusLabel = 'Available';
+                let statusClass = 'monitor-status';
+                let dotColor = 'var(--accent-yellow)';
+
+                if (isFull) {
+                    statusLabel = 'Full';
+                    statusClass = 'monitor-status down';
+                    dotColor = 'var(--accent-red)';
+                } else if (isLiveToday) {
+                    statusLabel = 'Live';
+                    dotColor = 'var(--accent-green)';
+                } else if (attendees > 0) {
+                    statusLabel = 'Scheduled';
+                    dotColor = 'var(--accent-green)';
+                }
+
+                const levelTag = cls.level || cls.stroke || 'General';
+                const classDateTime = `${formatDate(cls.schedule_date)} • ${formatTime(cls.schedule_time)}`;
+                const seats = capacity > 0 ? `${attendees}/${capacity}` : `${attendees}`;
+
+                return `
+                    <div class="monitor-card">
+                        <div class="monitor-info">
+                            <div class="monitor-name">${cls.name || 'Class'} - ${cls.instructor || 'Instructor'}</div>
+                            <div class="monitor-stats">
+                                <span><i class="fas fa-users"></i> ${seats} students</span>
+                                <span><i class="fas fa-clock"></i> ${classDateTime}</span>
+                                <span><i class="fas fa-star"></i> ${levelTag}</span>
+                            </div>
+                        </div>
+                        <div class="${statusClass}">
+                            <span class="pulse" style="width: 8px; height: 8px; background: ${dotColor}; border-radius: 50%; display: inline-block; margin-right: 6px;"></span>
+                            ${statusLabel}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderRecentBookings(state) {
+            const bookings = state.bookings || [];
+            const classesById = state.classesById || new Map();
+
+            const weekStart = new Date();
+            const day = weekStart.getDay();
+            const daysSinceMonday = (day + 6) % 7;
+            weekStart.setHours(0, 0, 0, 0);
+            weekStart.setDate(weekStart.getDate() - daysSinceMonday);
+
+            const thisWeekCount = bookings.filter((b) => {
+                const d = parseDate(b.booking_date);
+                return d && d >= weekStart;
+            }).length;
+            document.getElementById('recentBookingsWeekBadge').textContent = `${thisWeekCount} This Week`;
+
+            const recent = [...bookings]
+                .sort((a, b) => {
+                    const aKey = `${toDateOnly(a.booking_date)} ${a.created_at || ''}`;
+                    const bKey = `${toDateOnly(b.booking_date)} ${b.created_at || ''}`;
+                    return bKey.localeCompare(aKey);
+                })
+                .slice(0, 8);
+
+            const tbody = document.getElementById('recentBookingsBody');
+            if (recent.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 20px;">No recent bookings</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = recent.map((booking) => {
+                const classInfo = booking.classes || classesById.get(booking.class_id) || {};
+                const className = classInfo.name || 'Class';
+                const amount = bookingAmount(booking, classInfo);
+
+                return `
+                    <tr>
+                        <td>${booking.name || booking.email || 'Student'}</td>
+                        <td>${className}</td>
+                        <td>${formatDateTime(booking.booking_date, booking.suggested_time)}</td>
+                        <td>${statusBadgeHtml(booking.status)}</td>
+                        <td>${formatCurrency(amount)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderRightSidebarStats(state) {
+            const bookings = state.bookings || [];
+            const classesById = state.classesById || new Map();
+
+            const members = new Set(
+                bookings
+                    .map((b) => b.user_id || b.email)
+                    .filter(Boolean)
+            );
+
+            const today = toDateOnly(new Date().toISOString());
+            const bookingsToday = bookings.filter((b) => toDateOnly(b.booking_date) === today);
+            const pendingToday = bookingsToday.filter((b) => isPendingStatus(b.status)).length;
+
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            const revenueMtd = bookings
+                .filter((b) => isApprovedStatus(b.status) && toDateOnly(b.booking_date) >= monthStart)
+                .reduce((sum, b) => {
+                    const cls = b.classes || classesById.get(b.class_id) || {};
+                    return sum + bookingAmount(b, cls);
+                }, 0);
+
+            const totalActionable = bookings.filter((b) => ['pending', 'approved', 'confirmed', 'declined'].includes(normalizeStatus(b.status))).length;
+            const approvedCount = bookings.filter((b) => isApprovedStatus(b.status)).length;
+            const approvalRate = totalActionable > 0 ? Math.round((approvedCount / totalActionable) * 100) : 0;
+
+            const uptimeSeconds = state.systemStatus && Number.isFinite(state.systemStatus.apiUptimeSeconds)
+                ? state.systemStatus.apiUptimeSeconds
+                : (state.health && Number.isFinite(state.health.uptime) ? state.health.uptime : 0);
+
+            document.getElementById('totalMembersValue').textContent = `${members.size}`;
+            document.getElementById('totalMembersChange').innerHTML = `<i class="fas fa-id-card"></i> ${bookings.length} total bookings`;
+
+            document.getElementById('bookingsTodayValue').textContent = `${bookingsToday.length}`;
+            document.getElementById('bookingsTodayChange').innerHTML = `<i class="fas fa-clock"></i> ${pendingToday} pending`;
+
+            document.getElementById('revenueMtdValue').textContent = formatCurrency(revenueMtd);
+            document.getElementById('revenueMtdChange').innerHTML = '<i class="fas fa-check-circle"></i> Confirmed bookings only';
+
+            document.getElementById('systemUptimeValue').textContent = formatDuration(uptimeSeconds);
+            const sessionStoreLabel = state.systemStatus && state.systemStatus.sessionStore
+                ? state.systemStatus.sessionStore
+                : 'in-memory';
+            document.getElementById('systemUptimeChange').innerHTML = `<i class="fas fa-database"></i> ${sessionStoreLabel} sessions`;
+
+            document.getElementById('approvalRateValue').textContent = `${approvalRate}%`;
+            document.getElementById('approvalRateMeta').textContent = `${approvedCount}/${totalActionable} bookings approved`;
+        }
+
+        function renderBookingsManagement(state) {
+            const tableBody = document.getElementById('bookingsList');
+            if (!tableBody) return;
+
+            if (state.bookingsError) {
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--accent-red); padding: 20px;">${state.bookingsError.message}</td></tr>`;
+                return;
+            }
+
+            const bookings = state.bookings || [];
+            const classesById = state.classesById || new Map();
+
+            if (!Array.isArray(bookings) || bookings.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">No bookings yet</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = bookings.map((booking) => {
+                const classInfo = booking.classes || classesById.get(booking.class_id) || {};
+                const classLabel = classInfo.name || classInfo.stroke || 'General';
+                const dateLabel = formatDateTime(booking.booking_date, booking.suggested_time);
+
+                return `
+                    <tr>
+                        <td>${booking.name || 'N/A'}</td>
+                        <td>${booking.email || 'N/A'}</td>
+                        <td>${classLabel}</td>
+                        <td>${dateLabel}</td>
+                        <td>${statusBadgeHtml(booking.status)}</td>
+                        <td>
+                            ${isPendingStatus(booking.status) ? `
+                                <button onclick="approveBooking('${booking.id}')" style="padding: 6px 12px; background: var(--accent-green); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin-right: 6px;">Approve</button>
+                                <button onclick="declineBooking('${booking.id}')" style="padding: 6px 12px; background: var(--accent-red); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Decline</button>
+                            ` : `
+                                <button onclick="deleteBooking('${booking.id}')" style="padding: 6px 12px; background: var(--border-color); color: var(--text-secondary); border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Delete</button>
+                            `}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function loadDashboardData() {
+            try {
+                dashboardState = await fetchDashboardState();
+                renderSystemStatus(dashboardState);
+                renderActiveClasses(dashboardState);
+                renderRecentBookings(dashboardState);
+                renderRightSidebarStats(dashboardState);
+                renderBookingsManagement(dashboardState);
+            } catch (err) {
+                console.error('Dashboard load failed:', err);
+                const badge = document.getElementById('overallSystemBadge');
+                if (badge) {
+                    badge.className = 'badge warning';
+                    badge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Dashboard data unavailable';
+                }
+                document.getElementById('bookingsList').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--accent-red); padding: 20px;">${err.message}</td></tr>`;
+            }
+        }
 
         // Initialize user data on page load
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
             currentAdmin = checkAuthentication();
             if (currentAdmin) {
                 updateUserProfile(currentAdmin);
+                await loadDashboardData();
             }
         });
 
@@ -1463,67 +1816,24 @@
             document.getElementById('userAvatar').textContent = firstLetter;
         }
 
-        // ===== BOOKINGS MANAGEMENT =====
         async function loadBookings() {
-            try {
-                const adminToken = localStorage.getItem('adminToken');
-                if (!adminToken) {
-                    document.getElementById('bookingsList').innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--accent-red); padding: 20px;">Not authenticated as admin</td></tr>';
-                    return;
-                }
-
-                const response = await fetch('/api/bookings', {
-                    headers: { 'x-admin-token': adminToken }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.status}`);
-                }
-
-                const bookings = await response.json();
-                if (!Array.isArray(bookings) || bookings.length === 0) {
-                    document.getElementById('bookingsList').innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">No bookings yet</td></tr>';
-                    return;
-                }
-
-                const html = bookings.map(booking => `
-                    <tr>
-                        <td>${booking.name || 'N/A'}</td>
-                        <td>${booking.email || 'N/A'}</td>
-                        <td>${booking.category || booking.stroke || 'General'}</td>
-                        <td>${booking.date || 'N/A'}</td>
-                        <td><span class="badge ${booking.status === 'confirmed' || booking.status === 'approved' ? 'success' : booking.status === 'declined' ? 'danger' : 'warning'}"><i class="fas ${booking.status === 'confirmed' || booking.status === 'approved' ? 'fa-check' : booking.status === 'declined' ? 'fa-times' : 'fa-clock'}"></i> ${booking.status || 'pending'}</span></td>
-                        <td>
-                            ${booking.status === 'pending' ? `
-                                <button onclick="approveBooking('${booking.id}')" style="padding: 6px 12px; background: var(--accent-green); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin-right: 6px;">Approve</button>
-                                <button onclick="declineBooking('${booking.id}')" style="padding: 6px 12px; background: var(--accent-red); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Decline</button>
-                            ` : `
-                                <button onclick="deleteBooking('${booking.id}')" style="padding: 6px 12px; background: var(--border-color); color: var(--text-secondary); border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Delete</button>
-                            `}
-                        </td>
-                    </tr>
-                `).join('');
-                
-                document.getElementById('bookingsList').innerHTML = html;
-            } catch (err) {
-                console.error('Error loading bookings:', err);
-                document.getElementById('bookingsList').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--accent-red); padding: 20px;">Error: ${err.message}</td></tr>`;
-            }
+            await loadDashboardData();
         }
 
         async function approveBooking(bookingId) {
             if (!confirm('Approve this booking?')) return;
-            
+
             try {
-                const adminToken = localStorage.getItem('adminToken');
+                const adminToken = getAdminToken();
                 const response = await fetch(`/api/bookings/${bookingId}/approve`, {
                     method: 'PUT',
                     headers: { 'x-admin-token': adminToken }
                 });
 
-                if (!response.ok) throw new Error('Approval failed');
+                const payload = await response.json().catch(() => null);
+                if (!response.ok) throw new Error((payload && (payload.error || payload.details)) || 'Approval failed');
                 alert('Booking approved!');
-                loadBookings();
+                await loadDashboardData();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -1531,17 +1841,18 @@
 
         async function declineBooking(bookingId) {
             if (!confirm('Decline this booking?')) return;
-            
+
             try {
-                const adminToken = localStorage.getItem('adminToken');
+                const adminToken = getAdminToken();
                 const response = await fetch(`/api/bookings/${bookingId}/decline`, {
                     method: 'PUT',
                     headers: { 'x-admin-token': adminToken }
                 });
 
-                if (!response.ok) throw new Error('Decline failed');
+                const payload = await response.json().catch(() => null);
+                if (!response.ok) throw new Error((payload && (payload.error || payload.details)) || 'Decline failed');
                 alert('Booking declined!');
-                loadBookings();
+                await loadDashboardData();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -1549,17 +1860,18 @@
 
         async function deleteBooking(bookingId) {
             if (!confirm('Delete this booking?')) return;
-            
+
             try {
-                const adminToken = localStorage.getItem('adminToken');
+                const adminToken = getAdminToken();
                 const response = await fetch(`/api/bookings/${bookingId}`, {
                     method: 'DELETE',
                     headers: { 'x-admin-token': adminToken }
                 });
 
-                if (!response.ok) throw new Error('Delete failed');
+                const payload = await response.json().catch(() => null);
+                if (!response.ok) throw new Error((payload && (payload.error || payload.details)) || 'Delete failed');
                 alert('Booking deleted!');
-                loadBookings();
+                await loadDashboardData();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -1665,9 +1977,12 @@
                 };
                 document.getElementById('pageTitle').textContent = titles[section];
 
-                // Load bookings when viewing that section
+                // Refresh live data when entering major dashboard sections
                 if (section === 'bookings') {
                     loadBookings();
+                }
+                if (section === 'dashboard' || section === 'monitors') {
+                    loadDashboardData();
                 }
 
                 // Close sidebar on mobile
